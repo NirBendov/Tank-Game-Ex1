@@ -2,21 +2,23 @@
 #include <fstream>
 #include <string>
 #include <bits/stdc++.h>
+#include <vector>
 using namespace std;
 
 const string wall = "#";
+const string damaged_wall = "-";
 const string mine = "*";
 const string shell = "o";
 const string empty_space = " ";
 
-char **process(string fileName) {
+vector<vector<char>> process(string fileName) {
     ifstream f(fileName);
     string s;
 
     getline(f, s);
     int *d = dims(s);
     int i = 0;
-    char board[d[0]][d[1]] = {0};
+    vector<vector<char>> board;
     while(getline(f, s)) {
         if (i >= d[0]) {
             //handle error
@@ -27,12 +29,14 @@ char **process(string fileName) {
         if (s.length() < d[1] - 1) {
             // handle error
         }
+        vector<char> row;
         for (int j = 0; j < d[1]; ++j) {
-            board[i][j] = s[j]; 
+            row.push_back(s[j]);
         }
+        board.push_back(row);
         i++;
     }
-    return (char**)board;
+    return board;
 }
 
 int *dims(string s) {

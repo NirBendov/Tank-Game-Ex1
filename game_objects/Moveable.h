@@ -1,10 +1,7 @@
-#ifndef MOVEABLE_H
-#define MOVEABLE_H
-
+#pragma once
 class Moveable
 {
 private:
-    int location[2];
 public:
     enum Direction {
         UP = 0b1000,
@@ -16,10 +13,9 @@ public:
         LEFT = 0b0010,
         UP_LEFT = 0b1010
     };
+    int location[2];
     Direction dir;
     Moveable(int location[2], Direction dir);
     ~Moveable();
     void move();
 };
-
-#endif MOVEABLE_H
