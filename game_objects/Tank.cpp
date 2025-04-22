@@ -1,6 +1,8 @@
 #include "Moveable.h"
 #include "Shell.h"
 #include "Tank.h"
+#include "./algorithms/Algorithm.h"
+#include "./player/Player.h"
 
 Tank::Tank(int lc[2], Direction d):Moveable(lc, d) {}
 
@@ -17,4 +19,12 @@ Shell* Tank::shoot() {
 
 Tank::~Tank()
 {
+}
+
+void Tank::assignPlayerId(Player::PlayerId id) {
+    playerId = id;
+}
+
+const Player::PlayerId Tank::getPlayerId() {
+    return playerId;
 }
