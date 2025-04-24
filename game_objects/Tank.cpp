@@ -1,15 +1,16 @@
 #include "Moveable.h"
 #include "Shell.h"
 #include "Tank.h"
+#include "Direction.h"
 #include "./algorithms/Algorithm.h"
 #include "./player/Player.h"
 
-Tank::Tank(int lc[2], Direction d):Moveable(lc, d) {
-    ammoCount = 16;
+Tank::Tank(int lc[2], int d[2]):Moveable(lc, d) {
+    ammoCount = MAX_AMMO;
 }
 
-void Tank::aim(Direction newDir) {
-
+void Tank::turn(Turn t) {
+    *dir = *getDirection(dir, t);
 }
 
 Shell* Tank::shoot() {
@@ -19,10 +20,7 @@ Shell* Tank::shoot() {
     }
 }
 
-Tank::~Tank()
-{
-}
-
+// Tanks should only attack tanks with different playerId than their own
 void Tank::assignPlayerId(Player::PlayerId id) {
     playerId = id;
 }

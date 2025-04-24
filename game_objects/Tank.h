@@ -10,12 +10,14 @@ private:
     Algorithm *algo;
     Player::PlayerId playerId;
 public:
-    Tank(int lc[2], Direction d);
+    Tank(int lc[2], int d[2]);
     ~Tank();
-    void aim(Direction newDir); // changes tank's direction
+    void turn(Turn t); // changes tank's direction
     Shell* shoot(); // creates a new bullet with the same current location and direction
     void assignAlgorithm(Algorithm *a);
     const Algorithm *getAlgorithm();
     void assignPlayerId(Player::PlayerId id);
     const Player::PlayerId getPlayerId();
 };
+
+const int MAX_AMMO = 16;
