@@ -5,11 +5,13 @@
 #include <vector>
 using namespace std;
 
-const string wall = "#";
-const string damaged_wall = "-";
-const string mine = "*";
-const string shell = "o";
-const string empty_space = " ";
+const char wall = '#';
+const char damaged_wall = '-';
+const char mine = '*';
+const char shell = 'o';
+const char empty_space = ' ';
+const char player_one_tank = '1';
+const char player_two_tank = '2';
 
 vector<vector<char>> process(string fileName) {
     ifstream f(fileName);

@@ -4,7 +4,9 @@
 #include "./algorithms/Algorithm.h"
 #include "./player/Player.h"
 
-Tank::Tank(int lc[2], Direction d):Moveable(lc, d) {}
+Tank::Tank(int lc[2], Direction d):Moveable(lc, d) {
+    ammoCount = 16;
+}
 
 void Tank::aim(Direction newDir) {
 
