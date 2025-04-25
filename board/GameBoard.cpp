@@ -716,14 +716,32 @@ void GameBoard::saveGameMoves(const string& filename) const {
         return;
     }
 
+    // Save player 1 moves
     outputFile << "Player 1 moves:" << endl;
     for (const auto& move : player1Moves) {
         outputFile << move << endl;
     }
 
+    // Save player 2 moves
     outputFile << "\nPlayer 2 moves:" << endl;
     for (const auto& move : player2Moves) {
         outputFile << move << endl;
+    }
+
+    // Save game result
+    outputFile << "\nGame Result:" << endl;
+    if (winner == 0) {
+        outputFile << "Tie - Both players lost all their tanks" << endl;
+    } else {
+        outputFile << "Player " << winner << " won!" << endl;
+    }
+
+    // Save tank deaths in chronological order
+    outputFile << "\nTank Deaths (in order of occurrence):" << endl;
+    for (const auto& death : tankDeaths) {
+        outputFile << "Player " << death.playerId << "'s tank at position (" 
+                  << death.position.first << "," << death.position.second 
+                  << ") died from: " << death.cause << endl;
     }
 
     outputFile.close();

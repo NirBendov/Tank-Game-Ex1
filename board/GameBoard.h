@@ -32,7 +32,7 @@ private:
     void handleCollisions();
     void handleCollision(int i, int j, char currentChar);
     void moveTankBack(int x, int y);
-    int countShellsAtPosition(int x, int y) const;
+    int  countShellsAtPosition(int x, int y) const;
     void removeBulletsAtPosition(int x, int y);
     void killTanksAtPosition(int x, int y, const string& cause);
     bool isShellAtPosition(int x, int y) const;
@@ -64,7 +64,6 @@ public:
     void saveGameMoves(const string& filename) const;
     bool isGameOver() const { return gameOver; }
     int getWinner() const { return winner; } // Get the winner (0 for tie, 1 for player 1, 2 for player 2)
-    void setGameOver(bool status) { gameOver = status; }
     
     // Get positions of tanks for a specific player
     vector<pair<int, int>> getPlayerTankPositions(int playerId) const;
