@@ -1,4 +1,4 @@
-#include "./game_objects/Tank.h"
+#include "../game_objects/Tank.h"
 #include <vector>
 using namespace std;
 

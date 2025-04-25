@@ -1,5 +1,5 @@
 #pragma once
-#include "./game_objects/Tank.h"
+#include "../game_objects/Tank.h"
 #include "../board/GameBoard.h"
 #include "Action.h"
 #include <vector>

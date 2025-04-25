@@ -15,6 +15,10 @@ namespace BoardConstants {
     const char WALL_AND_SHELL = 'W';      // Wall + Shell
     const char DAMAGED_WALL_AND_SHELL = 'D';  // Damaged Wall + Shell
 
+    // Wall/Damaged Wall + Tank combinations
+    const char WALL_AND_TANK = 'X';       // Wall + Tank
+    const char DAMAGED_WALL_AND_TANK = 'Z';  // Damaged Wall + Tank
+
     // Mine combinations
     const char MINE_AND_SHELL = '&';      // Mine + Shell
     const char MINE_AND_TANK = 'M';       // Mine + Any Tank(s)
@@ -26,6 +30,11 @@ namespace BoardConstants {
     // Wall/Damaged Wall + Shell + Tank combinations
     const char WALL_SHELL_AND_TANK = 'U';  // Wall + Shell + Any Tank(s)
     const char DAMAGED_WALL_SHELL_AND_TANK = 'Y'; // Damaged Wall + Shell + Any Tank(s)
+
+    // Shell combinations
+    const char SHELL_AND_SHELL = 'O';     // Shell + Shell collision
+    const char MULTIPLE_TANKS_AND_SHELL = 'P'; // Multiple Tanks + Shell collision
+    const char SHELL_AND_TANK = 'Q';      // Shell + Single Tank collision
 
     // Game rules
     const int NUMBER_OF_TANKS_PER_PLAYER = 1;

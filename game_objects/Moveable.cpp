@@ -13,7 +13,9 @@ Moveable::Moveable(int lc[2], int d[2])
 void Moveable::move()
 {
     using namespace BoardConstants;
-    
+    // Store the previous position
+    prevPosition[0] = info.location[0];
+    prevPosition[1] = info.location[1];
     // X-axis movement with wrap-around
     info.location[0] += info.dir[0];
     if (info.location[0] < 0) {
@@ -29,6 +31,11 @@ void Moveable::move()
     } else if (info.location[1] >= BOARD_HEIGHT) {
         info.location[1] = 0;
     }
+}
+
+void Moveable::moveBack() {
+    // Simply swap current position with previous position
+    std::swap(info.location, prevPosition);
 }
 
 Moveable::~Moveable()

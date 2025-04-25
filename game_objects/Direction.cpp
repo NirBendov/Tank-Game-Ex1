@@ -1,6 +1,6 @@
 #include "Direction.h"
-#include "./constants/BoardConstants.h"
-#include "./board/GameBoard.h"
+#include "../constants/BoardConstants.h"
+#include "../board/GameBoard.h"
 #include <cmath>
 #include <array>
 

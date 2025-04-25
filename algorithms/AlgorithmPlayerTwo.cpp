@@ -1,7 +1,7 @@
 #include "Algorithm.h"
 #include "AlgorithmPlayerTwo.h"
-#include "./game_objects/Moveable.h"
-#include "./game_objects/Direction.h"
+#include "../game_objects/Moveable.h"
+#include "../game_objects/Direction.h"
 #include <vector>
 
 using namespace std;

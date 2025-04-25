@@ -20,9 +20,12 @@ public:
     virtual ~Moveable() = default;
 
     const Info& getInfo() const { return info; }
+    const array<int,2>& getPrevPosition() const { return prevPosition; }
 
     void move();
+    void moveBack();
 
 protected:
     Info info;
+    array<int,2> prevPosition;
 };
