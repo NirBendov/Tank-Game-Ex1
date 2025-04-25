@@ -1,26 +1,21 @@
 #pragma once
 #include "./game_objects/Tank.h"
+#include "../board/GameBoard.h"
+#include "Action.h"
 #include <vector>
 using namespace std;
 
 class Algorithm
 {
-private:
-    Tank *tank;
+protected:
+    int playerId;
+    GameBoard* gameBoard;
+    bool isMovingBackward;
+    int backwardMoveTurnsLeft;
+    pair<int, int> lastBackwardMoveTarget;
+
 public:
-    enum Action {
-        NOP,
-        SHOOT,
-        MOVE_FORWARD,
-        MOVE_BACKWARD,
-        TURN_R_45,
-        TURN_R_90,
-        TURN_L_45,
-        TURN_L_90
-    };
-    Algorithm(/* args */);
-    ~Algorithm();
-    const Tank* getTank();
-    void assignTank(Tank *t);
-    vector<Action> decideNextActions();
+    Algorithm(int playerId, GameBoard* gameBoard);
+    virtual ~Algorithm() = default;
+    virtual vector<Action> decideNextActions() = 0;
 };

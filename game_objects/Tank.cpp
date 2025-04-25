@@ -1,30 +1,45 @@
-#include "Moveable.h"
-#include "Shell.h"
 #include "Tank.h"
-#include "./algorithms/Algorithm.h"
-#include "./player/Player.h"
 
-Tank::Tank(int lc[2], Direction d):Moveable(lc, d) {}
+Tank::Tank(int location[2], int dir[2])
+  : Moveable(location, dir)
+  , ammoCount(MAX_AMMO)
+  , algo(nullptr)
+  , playerId(Player::PlayerId(/* some default, e.g. Player::None */))
+{}
 
-void Tank::aim(Direction newDir) {
+Tank::~Tank() {
+    delete algo;
+}
 
+void Tank::turn(Turn t) {
+    auto newDir = getDirection(info.dir.data(), t);
+    info.dir[0] = newDir[0];
+    info.dir[1] = newDir[1];
+    moveForward();
 }
 
 Shell* Tank::shoot() {
     if (ammoCount > 0) {
-        ammoCount--;
-        return new Shell((int[2]){location[0], location[1]}, dir);
+        --ammoCount;
+        moveForward();
+        return new Shell(info.location.data(), info.dir.data());
     }
+    // TODO: throw or handle out-of-ammo
+    return nullptr;
 }
 
-Tank::~Tank()
-{
+void Tank::assignAlgorithm(Algorithm *a) {
+    algo = a;
+}
+
+const Algorithm* Tank::getAlgorithm() const {
+    return algo;
 }
 
 void Tank::assignPlayerId(Player::PlayerId id) {
     playerId = id;
 }
 
-const Player::PlayerId Tank::getPlayerId() {
+Player::PlayerId Tank::getPlayerId() const {
     return playerId;
 }

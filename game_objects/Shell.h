@@ -5,6 +5,6 @@ class Shell: public Moveable
 {
 private:
 public:
-    Shell(int lc[2], Direction d);
+    Shell(int location[2], int direction[2]);
     ~Shell();
 };

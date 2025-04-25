@@ -1,47 +1,103 @@
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <bits/stdc++.h>
+#include <array>
 #include <vector>
+#include <string>
+#include <fstream>
+#include <stdexcept>
+#include <iostream>
+#include "../constants/BoardConstants.h"
+
 using namespace std;
+using namespace BoardConstants;
 
-const string wall = "#";
-const string damaged_wall = "-";
-const string mine = "*";
-const string shell = "o";
-const string empty_space = " ";
-
-vector<vector<char>> process(string fileName) {
-    ifstream f(fileName);
-    string s;
-
-    getline(f, s);
-    int *d = dims(s);
-    int i = 0;
-    vector<vector<char>> board;
-    while(getline(f, s)) {
-        if (i >= d[0]) {
-            //handle error
-        }
-        if (s.length() >= d[1]) {
-            // handle error
-        }
-        if (s.length() < d[1] - 1) {
-            // handle error
-        }
-        vector<char> row;
-        for (int j = 0; j < d[1]; ++j) {
-            row.push_back(s[j]);
-        }
-        board.push_back(row);
-        i++;
+// Parse dimensions from the first line of the file
+std::array<int, 2> dims(const std::string& s) {
+    size_t space = s.find(" ");
+    if (space == std::string::npos) {
+        throw std::runtime_error("Invalid dimensions format: " + s);
     }
-    return board;
+    
+    int height = std::stoi(s.substr(0, space));
+    int width = std::stoi(s.substr(space + 1));
+    
+    if (height <= 0 || width <= 0) {
+        throw std::runtime_error("Invalid board dimensions: " + s);
+    }
+    
+    return {height, width};
 }
 
-int *dims(string s) {
-    int space = s.find(" ");
-    int height = stoi(s.substr(0, space));
-    int width = stoi(s.substr(space + 1));
-    return (int[2]){height, width};
+// Process the board file and return a 2D vector of characters
+std::vector<std::vector<char>> process(const std::string& fileName) {
+    std::ifstream f(fileName);
+    if (!f.is_open()) {
+        throw std::runtime_error("Could not open file: " + fileName);
+    }
+
+    std::string s;
+    if (!std::getline(f, s)) {
+        throw std::runtime_error("File is empty: " + fileName);
+    }
+
+    std::array<int, 2> d = dims(s);
+    BOARD_HEIGHT = d[0];
+    BOARD_WIDTH = d[1];
+    std::cout << "Board dimensions: " << BOARD_HEIGHT << "x" << BOARD_WIDTH << std::endl;
+    
+    std::vector<std::vector<char>> board;
+    int player1_count = 0;
+    int player2_count = 0;
+    int line_number = 1; // Track line number for better error messages
+    
+    while (std::getline(f, s)) {
+        line_number++;
+        if (board.size() >= static_cast<size_t>(BOARD_HEIGHT)) {
+            break; // Stop reading if we already have the required number of lines
+        }
+        
+        if (s.length() < static_cast<size_t>(BOARD_WIDTH)) {
+            throw std::runtime_error("Invalid line length at line " + std::to_string(line_number) + ": expected " + std::to_string(BOARD_WIDTH) + ", got " + std::to_string(s.length()));
+        }
+        
+        std::vector<char> row;
+        for (size_t i = 0; i < std::min(s.length(), static_cast<size_t>(BOARD_WIDTH)); i++) {
+            char c = s[i];
+            // Validate characters
+            if (c != WALL && c != DAMAGED_WALL && c != MINE && c != PLAYER1_TANK && c != PLAYER2_TANK && c != EMPTY_SPACE) {
+                throw std::runtime_error("Invalid character '" + std::string(1, c) + "' at line " + std::to_string(line_number));
+            }
+            
+            // Count tanks and enforce the limit
+            if (c == PLAYER1_TANK) {
+                player1_count++;
+                if (player1_count > NUMBER_OF_TANKS_PER_PLAYER) {
+                    c = EMPTY_SPACE; // Replace extra tanks with empty space
+                }
+            }
+            if (c == PLAYER2_TANK) {
+                player2_count++;
+                if (player2_count > NUMBER_OF_TANKS_PER_PLAYER) {
+                    c = EMPTY_SPACE; // Replace extra tanks with empty space
+                }
+            }
+            
+            row.push_back(c);
+        }
+        board.push_back(row);
+    }
+    
+    // Validate board dimensions
+    if (board.size() != static_cast<size_t>(BOARD_HEIGHT)) {
+        throw std::runtime_error("Invalid board height: expected " + std::to_string(BOARD_HEIGHT) + ", got " + std::to_string(board.size()));
+    }
+    
+    // Validate tank counts
+    if (player1_count != 1) {
+        std::cout << "Warning: Invalid number of player 1 tanks: " << player1_count << std::endl;
+    }
+    
+    if (player2_count != 1) {
+        std::cout << "Warning: Invalid number of player 2 tanks: " << player2_count << std::endl;
+    }
+    
+    return board;
 }
