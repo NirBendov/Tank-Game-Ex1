@@ -23,9 +23,8 @@ private:
     map<pair<int, int>, int> tankShootCooldowns; // Maps tank position to remaining cooldown turns
     vector<Action> stepMoves; // List of moves to execute in the next step
     vector<pair<int, int>> backwardMoves; // Positions where tanks moved back
-
+    int numOfTurnsSinceNoAmmo = 0; // Number of turns since all ammo was used
     bool isWall(int x, int y) const;
-    void updateCooldowns();
     char calculateNewPositionCharForTank(int x, int y, Player::PlayerId playerId);
     char calculateNewPositionCharForShell(int x, int y);
     char handleMultipleTanksPosition(int x, int y);
@@ -39,7 +38,7 @@ private:
     void killTanksAtPosition(int x, int y, const string& cause);
     bool isShellAtPosition(int x, int y) const;
     bool checkGameOver(); // Check if game is over and set winner
-
+    void checkNoAmoForTanks(); // Check if all tanks are out of ammo
 public:
     typedef struct {
         pair<int, int> position;

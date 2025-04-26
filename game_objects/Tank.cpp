@@ -19,7 +19,6 @@ void Tank::turn(Turn t) {
     info.dir[0] = newDir[0];
     info.dir[1] = newDir[1];
     moveForward();
-    decreaseShootingCooldown();
 }
 
 Shell* Tank::shoot() {

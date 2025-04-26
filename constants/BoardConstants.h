@@ -40,6 +40,7 @@ namespace BoardConstants {
     const int NUMBER_OF_TANKS_PER_PLAYER = 1;
     const int SHOOT_COOLDOWN = 5;
     const int MOVE_BACKWARD_COOLDOWN = 2;
+    const int NO_AMMO_TURNS = 40; // Number of turns without ammo before game over
 
     // Global board dimensions
     extern const int BOARD_HEIGHT;
