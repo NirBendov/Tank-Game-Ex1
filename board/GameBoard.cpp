@@ -23,17 +23,6 @@ bool GameBoard::isWall(int x, int y) const {
     return board[x][y] == WALL || board[x][y] == DAMAGED_WALL;
 }
 
-void GameBoard::updateCooldowns() {
-    // Decrease cooldown for all tanks
-    for (auto it = tankShootCooldowns.begin(); it != tankShootCooldowns.end();) {
-        if (--(it->second) <= 0) {
-            it = tankShootCooldowns.erase(it);
-        } else {
-            ++it;
-        }
-    }
-}
-
 GameBoard::GameBoard(const vector<vector<char>>& initialBoard) 
     : board(initialBoard), gameOver(false), winner(0) {
     height = board.size();
@@ -281,9 +270,9 @@ void GameBoard::performActions() {
                 Shell* shell = actualTank->shoot();
                 if (shell) {
                     // Add shell to bullets
-                    bulletsPositions.push_back(*shell);
-                    // Set cooldown for the tank
-                    tankShootCooldowns[std::make_pair(location[0], location[1])] = BoardConstants::SHOOT_COOLDOWN;
+                    if (shell != nullptr) {
+                        bulletsPositions.push_back(*shell);
+                    }
                     delete shell;
                     std::cout << "Shell created and added to board" << std::endl;
                 }
@@ -420,6 +409,7 @@ void GameBoard::performActions() {
         if(action.type() != Action::Type::MOVE_BACKWARD){
             actualTank->cancelMoveBackward();
         }
+        actualTank->decreaseShootingCooldown();
     }
     
     // Clear the step moves after processing
@@ -802,29 +792,22 @@ void GameBoard::handleCollisions() {
 
 void GameBoard::executeStep() {
     std::cout << "Executing game step..." << std::endl;
-    moveShells();
-    std::cout << "Shells moved" << std::endl;
-    handleCollisions();
-    if (gameOver) {
-        std::cout << "Game over" << std::endl;
-        return;
-    }
-    std::cout << "Collisions handled" << std::endl;
-    moveShells();
-    std::cout << "Shells moved again" << std::endl;
-    handleCollisions();
-    if (gameOver) {
-        std::cout << "Game over" << std::endl;
-        return;
+    for (int i = 0; i < 2; ++i) {
+        moveShells();
+        std::cout << "Shells moved" << (i == 0 ? "" : " again") << std::endl;
+        handleCollisions();
+        if (gameOver) {
+            std::cout << "Game over" << std::endl;
+            return;
+        }
+        std::cout << "Collisions handled" << (i == 0 ? "" : " again") << std::endl;
     }
     std::cout << "Collisions handled again" << std::endl;
     performActions();
     std::cout << "Actions performed" << std::endl;
     handleCollisions();
     std::cout << "Collisions handled third time" << std::endl;
-    // Update cooldowns
-    updateCooldowns();
-    std::cout << "Cooldowns updated" << std::endl;
+    checkNoAmoForTanks();
 }
 
 vector<pair<int, int>> GameBoard::getPlayerTankPositions(int playerId) const {
@@ -979,6 +962,44 @@ void GameBoard::printBoard() const {
     std::cout << std::endl;
 }
 
-std::vector<std::vector<char>> GameBoard::getBoard() const {
-    return board;
+void GameBoard::checkNoAmoForTanks() {
+    bool tankHasAmmo = false;
+    for (auto& tank : player1Tanks) {
+        if (tank.getAmmoCount() == 0) {
+            tankHasAmmo = true;
+        }
+    }
+    for (auto& tank : player2Tanks) {
+        if (tank.getAmmoCount() == 0) {
+            tankHasAmmo = true;
+        }
+    }
+    if(!tankHasAmmo){
+        numOfTurnsSinceNoAmmo++;
+    }
+    if(numOfTurnsSinceNoAmmo >= BoardConstants::NO_AMMO_TURNS){
+        gameOver = true;
+        winner = 0; // 0 represents a tie
+    }
+}
+
+void GameBoard::checkNoAmoForTanks() {
+    bool tankHasAmmo = false;
+    for (auto& tank : player1Tanks) {
+        if (tank.getAmmoCount() == 0) {
+            tankHasAmmo = true;
+        }
+    }
+    for (auto& tank : player2Tanks) {
+        if (tank.getAmmoCount() == 0) {
+            tankHasAmmo = true;
+        }
+    }
+    if(!tankHasAmmo){
+        numOfTurnsSinceNoAmmo++;
+    }
+    if(numOfTurnsSinceNoAmmo >= BoardConstants::NO_AMMO_TURNS){
+        gameOver = true;
+        winner = 0; // 0 represents a tie
+    }
 }
