@@ -978,3 +978,7 @@ void GameBoard::printBoard() const {
     }
     std::cout << std::endl;
 }
+
+std::vector<std::vector<char>> GameBoard::getBoard() const {
+    return board;
+}

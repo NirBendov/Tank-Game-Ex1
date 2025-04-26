@@ -25,6 +25,8 @@ struct Node {
 bool isValid(int x, int y, const vector<vector<int>>& grid, const vector<vector<bool>>& visited, bool includeWalls);
 Point wrapPoint(int x, int y, int rows, int cols);
 vector<Point> directPathFinder(Point start, Point end, int rows, int columns);
-vector<Point> bfsPathfinder(const vector<vector<int>>& grid, Point start, Point end, bool includeWalls);
+vector<Point> bfsPathfinder(const vector<vector<char>>& grid, Point start, Point end, bool includeWalls);
 int dist(Point p1, Point p2);
 vector<Point> updatePath(vector<Point> &path, Point &newEnd);
+bool isPathStraight(vector<Point> &path, int rows, int columns);
+array<int,2> calcDirection(vector<Point> &path, int rows, int columns);

@@ -44,12 +44,21 @@ bool isInBulletPath(array<int, 2> start, array<int, 2> trajectory, array<int, 2>
     dx = dx == 0 ? dx : dx/abs(dx);
     if (!(trajectory[0] == dy && trajectory[1] == dx))
         return false;
-    int m = trajectory[0] != 0 ? min(start[0], end[0]) : min(start[1], end[1]);
-    int n = trajectory[0] != 0 ? max(start[0], end[0]) : max(start[1], end[1]);
-    int x = trajectory[0] != 0 ? start[0] : end[0];
-    int y = trajectory[0] != 0 ? start[1] : end[1];
-    for (int i = m; i <= n; ++i) {
-        // TODO: Implement bullet path checking
+
+    vector<vector<char>> board = gameBoard->getBoard();
+    int rows = board.size();
+    int columns = board[0].size();
+
+    int m = trajectory[0] != 0 ? start[0] : start[1];
+    int n = trajectory[0] != 0 ? end[0] : end[1];
+    for (int i = 0; i <= abs(m-n); ++i) {
+        int y = (start[0] + i * trajectory[0])%rows; 
+        int x = (start[1] + i * trajectory[1])%columns;
+        if (board[y][x] != BoardConstants::EMPTY_SPACE 
+        && board[y][x] != BoardConstants::MINE
+        && board[y][x] != BoardConstants::SHELL) {
+            return false;
+        }
     }
     return true;
 }

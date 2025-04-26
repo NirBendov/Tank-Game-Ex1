@@ -55,6 +55,7 @@ public:
     void killTank() { isTankAlive = false; }
     void decreaseShootingCooldown();
     int getShootingCooldown();
+    int getAmmoCount();
 };
 
 static constexpr int MAX_AMMO = 16;

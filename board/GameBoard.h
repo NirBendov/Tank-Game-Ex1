@@ -75,4 +75,6 @@ public:
 
     // Print the current state of the board
     void printBoard() const;
+
+    vector<vector<char>> getBoard() const;
 }; 

@@ -19,4 +19,5 @@ public:
     virtual ~Algorithm() = default;
     virtual vector<Action> decideNextActions() = 0;
     Action moveBackwards(); 
+    virtual void defaultMode();
 };

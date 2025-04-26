@@ -60,3 +60,7 @@ void Tank::decreaseShootingCooldown() {
 int Tank::getShootingCooldown() {
     return shootingCooldown;
 }
+
+int Tank::getAmmoCount() {
+    return ammoCount;
+}

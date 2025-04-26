@@ -10,7 +10,7 @@
 
 using namespace std;
 
-bool isValid(int x, int y, const vector<vector<int>>& grid, const vector<vector<bool>>& visited, bool includeWalls) {
+bool isValid(int x, int y, const vector<vector<char>>& grid, const vector<vector<bool>>& visited, bool includeWalls) {
     if (visited[x][y]) {
         return false;
     }
@@ -48,22 +48,22 @@ vector<Point> directPathFinder(Point start, Point end, int rows, int columns) {
 
     vector<Point> path;
     for (int i = 0; i <= dist; ++i) {
-        Point p = wrapPoint(start.x + xDir*i, start.y + yDir*i, rows, cols);
+        Point p = wrapPoint(start.x + xDir*i, start.y + yDir*i, rows, columns);
         path.push_back(p);
     }
     for (int i = dist+1; i <= maxDist; ++i) {
         Point p;
         if (horizontalDist > verticalDist)
-            p = wrapPoint(start.x + xDir*i, end.y, rows, cols);
+            p = wrapPoint(start.x + xDir*i, end.y, rows, columns);
         else 
-            p = wrapPoint(end.x, start.y + yDir*i, rows, cols);
+            p = wrapPoint(end.x, start.y + yDir*i, rows, columns);
         path.push_back(p);
     }
 
     return path;
 }
 
-vector<Point> bfsPathfinder(const vector<vector<int>>& grid, Point start, Point end, bool includeWalls) {
+vector<Point> bfsPathfinder(const vector<vector<char>>& grid, Point start, Point end, bool includeWalls) {
     int rows = grid.size();
     int cols = grid[0].size();
 
@@ -113,12 +113,14 @@ int dist(Point p1, Point p2) {
 }
 
 vector<Point> updatePath(vector<Point> &path, Point &newEnd) {
-    Point end = path.pop_back();
+    Point end = path.back();
+    path.pop_back();
     if (newEnd == end) {
         path.push_back(newEnd);
     }
     else {
-        Point nearEnd = path.pop_back();
+        Point nearEnd = path.back();
+        path.pop_back();
         if (!(newEnd == nearEnd)) {
             if (dist(end, newEnd) >= dist(nearEnd, newEnd)) {
                 if (!path.empty()) {
@@ -137,6 +139,50 @@ vector<Point> updatePath(vector<Point> &path, Point &newEnd) {
     }
 }
 
+array<int,2> calcDirection(vector<Point> &path, int rows, int columns) {
+    Point *start = &path[0];
+    Point *next = &path[1];
+    int dx, dy;
+    if (start->x == next->x)
+        dx = 0;
+    else if (start->x == 0 and next->x == columns - 1) 
+        dx = -1;
+    else if (start->x == columns - 1 and next->x == 0)
+        dx = 1;
+    else
+        dx = next->x - start->x;
+
+    if (start->y == next->y)
+        dy = 0;
+    else if (start->y == 0 and next->y == rows - 1) 
+        dy = -1;
+    else if (start->y == rows - 1 and next->y == 0)
+        dy = 1;
+    else
+        dy = next->y - start->y;
+    
+    return {dx ,dy};
+}
+
+bool isPathStraight(vector<Point> &path, int rows, int columns) {
+    if (path.size() == 1) {
+        return true;
+    }
+    array<int,2> dir = calcDirection(path, rows, columns);
+
+    for (int i = 1; i < path.size() - 1; ++i) {
+        Point *start = &path[i];
+        Point *next = &path[i+1];
+        if (!((next->x - start->x)%columns == dir[0]%columns)) {
+            return false;
+        }
+        if (!((next->y - start->y)%rows == dir[1]%rows)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 int main() {
     vector<vector<int>> grid = {
         {0, 1, 0, 0, 0},
@@ -149,7 +195,7 @@ int main() {
     Point start = {0, 0};
     Point end = {4, 4};
 
-    vector<Point> path = bfsPathfinder(grid, start, end);
+    vector<Point> path = bfsPathfinder(grid, start, end, false);
 
     if (!path.empty()) {
         cout << "Path found:\n";
