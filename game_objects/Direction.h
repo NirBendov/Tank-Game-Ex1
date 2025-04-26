@@ -1,4 +1,9 @@
 #pragma once
+#include <array>
+
+class GameBoard;  // Forward declaration
+
+using namespace std;
 
 const int directions[8][2] = {
     {-1, 0}, //UP
@@ -15,10 +20,14 @@ enum Turn {
     RIGHT_90 = 2,
     RIGHT_45 = 1,
     LEFT_45 = -1,
-    LEFT_90 = -2
+    LEFT_90 = -2,
+    RIGHT_135 = 3,
+    LEFT_135 = -3,
+    COMPLETE_180 = 4,
+    NONE_0 = 0
 };
 
-int vectorMultiply(int d1[2], int d2[2]);
-int inverseMap(int d[2]);
-int *getDirection(int d[2], Turn t);
+int vectorMultiply(array<int, 2> d1, array<int, 2> d2);
+int inverseMap(array<int, 2> d);
+array<int, 2> getDirection(array<int, 2> d, Turn t);
 bool isInBulletPath(array<int, 2> start, array<int, 2> trajectory, array<int, 2> end, GameBoard *gameBoard);

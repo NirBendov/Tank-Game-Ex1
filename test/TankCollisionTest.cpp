@@ -1,46 +1,103 @@
+#include "TankCollisionTest.h"
 #include "GameTest.h"
 #include "TestRunner.h"
 #include "../algorithms/Action.h"
 #include "../game_objects/Tank.h"
 #include "../game_objects/Direction.h"
+#include "../board/GameBoard.h"
+#include <iostream>
+#include <vector>
+#include <string>
 
 void setupTankCollisionTest(TestRunner& runner) {
-    // Create a simple board with two tanks facing each other
-    std::vector<std::vector<char>> board = {
-        {'#', '#', '#', '#', '#', '#', '#', '#'},
-        {'#', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
-        {'#', ' ', '1', ' ', ' ', '2', ' ', '#'},
-        {'#', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
-        {'#', '#', '#', '#', '#', '#', '#', '#'}
-    };
+    // Test 1: Basic tank collision
+    {
+        // Create a simple board with two tanks facing each other
+        std::vector<std::vector<char>> board = {
+            {'#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', ' ', ' ', '1', '2', ' ', ' ', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#'}
+        };
 
-    // Create tanks for the moves
-    int p1Location[2] = {2, 2};
-    int p1Direction[2] = {0, 1}; // Facing right
-    Tank p1Tank(p1Location, p1Direction);
-    p1Tank.assignPlayerId(Player::PlayerId::P1);
+        // Create moves - both tanks move forward to collide
+        std::vector<Action::Type> p1Moves = {
+            Action::Type::MOVE_FORWARD
+        };
 
-    int p2Location[2] = {2, 5};
-    int p2Direction[2] = {0, -1}; // Facing left
-    Tank p2Tank(p2Location, p2Direction);
-    p2Tank.assignPlayerId(Player::PlayerId::P2);
+        std::vector<Action::Type> p2Moves = {
+        };
 
-    // Create moves - both tanks move forward to collide
-    std::vector<Action> p1Moves = {
-        Action(Action::ActionType::MOVE_FORWARD, p1Tank)
-    };
+        // Expected deaths
+        std::vector<GameBoard::TankDeath> expectedDeaths = {
+            {{2, 4}, 1, "Multiple tanks collision"},
+            {{2, 4}, 2, "Multiple tanks collision"}
+        };
 
-    std::vector<Action> p2Moves = {
-        Action(Action::ActionType::MOVE_FORWARD, p2Tank)
-    };
+        // Create and add the test
+        GameTest test("TankCollisionTest_Basic", board, p1Moves, p2Moves, 0, expectedDeaths);
+        runner.addTest(test);
+    }
 
-    // Expected deaths
-    std::vector<GameBoard::TankDeath> expectedDeaths = {
-        {{3, 3}, 1, "Multiple tanks collision"},
-        {{3, 3}, 2, "Multiple tanks collision"}
-    };
+    // Test 2: Tank dodging collision
+    {
+        // Create a board with two tanks facing each other
+        std::vector<std::vector<char>> board = {
+            {'#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', ' ', ' ', '1', ' ', '2', ' ', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#'}
+        };
 
-    // Create and add the test
-    GameTest test("TankCollisionTest", board, p1Moves, p2Moves, 0, expectedDeaths);
-    runner.addTest(test);
-} 
+        // Create moves - tank 1 moves forward, tank 2 turns and moves away
+        std::vector<Action::Type> p1Moves = {
+            Action::Type::MOVE_FORWARD,
+            Action::Type::MOVE_FORWARD
+        };
+
+        std::vector<Action::Type> p2Moves = {
+            Action::Type::TURN_R_90,
+            Action::Type::MOVE_FORWARD
+        };
+
+        // Expected deaths - none, as tank 2 dodges
+        std::vector<GameBoard::TankDeath> expectedDeaths = {};
+
+        // Create and add the test
+        GameTest test("TankCollisionTest_Dodge", board, p1Moves, p2Moves, 0, expectedDeaths);
+        runner.addTest(test);
+    }
+
+    // Test 3: Tank pass each other
+    {
+        // Create a simple board with two tanks facing each other
+        std::vector<std::vector<char>> board = {
+            {'#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', ' ', ' ', '1', '2', ' ', ' ', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#'}
+        };
+
+        // Create moves - both tanks move forward to collide
+        std::vector<Action::Type> p1Moves = {
+            Action::Type::MOVE_FORWARD
+        };
+
+        std::vector<Action::Type> p2Moves = {
+            Action::Type::MOVE_FORWARD
+        };
+
+        // Expected deaths
+        std::vector<GameBoard::TankDeath> expectedDeaths = {
+            {{2, 3}, 1, "Multiple tanks collision"},
+            {{2, 3}, 2, "Multiple tanks collision"}
+        };
+
+        // Create and add the test
+        GameTest test("TankCollisionTest_HopOver", board, p1Moves, p2Moves, 0, expectedDeaths);
+        runner.addTest(test);
+    }
+}

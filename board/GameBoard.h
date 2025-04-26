@@ -3,6 +3,7 @@
 #include <string>
 #include "../game_objects/Moveable.h"
 #include "../game_objects/Tank.h"
+#include "../game_objects/Shell.h"
 #include "../algorithms/Action.h"
 #include <map>
 
@@ -18,13 +19,14 @@ private:
     int winner; // 0 for tie, 1 for player 1, 2 for player 2
     vector<Tank> player1Tanks;
     vector<Tank> player2Tanks;
+    vector<Shell> bulletsPositions; // Store bullets in the main class
     map<pair<int, int>, int> tankShootCooldowns; // Maps tank position to remaining cooldown turns
     vector<Action> stepMoves; // List of moves to execute in the next step
     vector<pair<int, int>> backwardMoves; // Positions where tanks moved back
 
     bool isWall(int x, int y) const;
     void updateCooldowns();
-    char calculateNewPositionCharForTank(int x, int y);
+    char calculateNewPositionCharForTank(int x, int y, Player::PlayerId playerId);
     char calculateNewPositionCharForShell(int x, int y);
     char handleMultipleTanksPosition(int x, int y);
     void performActions();
@@ -40,20 +42,12 @@ private:
 
 public:
     typedef struct {
-        vector<Tank> player1Tanks;
-        vector<Tank> player2Tanks;
-        vector<Shell> bulletsPositions;
-    } BoardData;
-    
-    typedef struct {
         pair<int, int> position;
         int playerId;
         string cause;
     } TankDeath;
     
     vector<TankDeath> tankDeaths; // List of tank deaths with their positions, player IDs and causes
-    
-    BoardData *boardData;
     
     GameBoard(const vector<vector<char>>& initialBoard);
     ~GameBoard();
@@ -65,14 +59,20 @@ public:
     bool isGameOver() const { return gameOver; }
     int getWinner() const { return winner; } // Get the winner (0 for tie, 1 for player 1, 2 for player 2)
     
+    // Get tanks for a specific player
+    const vector<Tank>& getPlayerTanks(int playerId) const {
+        return playerId == 1 ? player1Tanks : player2Tanks;
+    }
+
     // Get positions of tanks for a specific player
     vector<pair<int, int>> getPlayerTankPositions(int playerId) const;
     
     // Get positions of enemy tanks for a specific player
     vector<pair<int, int>> getEnemyTankPositions(int playerId) const;
 
-    // Get tanks for a specific player
-    const vector<Tank>& getPlayerTanks(int playerId) const {
-        return playerId == 1 ? player1Tanks : player2Tanks;
-    }
+    // Get all bullets on the board
+    const vector<Shell>& getBullets() const { return bulletsPositions; }
+
+    // Print the current state of the board
+    void printBoard() const;
 }; 

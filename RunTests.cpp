@@ -1,6 +1,8 @@
 #include "test/TestRunner.h"
 #include "test/TankCollisionTest.h"
 #include "test/ShellCollisionTest.h"
+#include "test/MineInteractionTest.h"
+#include "test/WallInteractionTest.h"
 #include <iostream>
 
 int main() {
@@ -9,7 +11,8 @@ int main() {
     // Add all test setups
     setupTankCollisionTest(runner);
     setupShellCollisionTest(runner);
-    // Add more test setups here...
+    setupMineInteractionTest(runner);
+    setupWallInteractionTest(runner);
 
     // Run all tests
     runner.runAllTests();

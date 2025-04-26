@@ -1,6 +1,6 @@
 #pragma once
 #include "../game_objects/Tank.h"
-#include "../board/GameBoard.h"
+class GameBoard;  // Forward declaration
 #include "Action.h"
 #include <vector>
 using namespace std;
@@ -18,4 +18,5 @@ public:
     Algorithm(int playerId, GameBoard* gameBoard);
     virtual ~Algorithm() = default;
     virtual vector<Action> decideNextActions() = 0;
+    Action moveBackwards(); 
 };

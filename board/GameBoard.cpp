@@ -3,9 +3,12 @@
 #include <iostream>
 #include <algorithm>
 #include "GameBoard.h"
+#include "../game_objects/Tank.h"
+#include "../game_objects/Shell.h"
 #include "../algorithms/Action.h"
 #include "../constants/BoardConstants.h"
 #include "../game_objects/Direction.h"
+
 using namespace std;
 using namespace BoardConstants;
 
@@ -35,7 +38,6 @@ GameBoard::GameBoard(const vector<vector<char>>& initialBoard)
     : board(initialBoard), gameOver(false), winner(0) {
     height = board.size();
     width = board[0].size();
-    boardData = new BoardData();
 
     // Initialize tanks based on the board
     for (int i = 0; i < height; i++) {
@@ -46,30 +48,27 @@ GameBoard::GameBoard(const vector<vector<char>>& initialBoard)
                 Tank tank(location, direction);
                 tank.assignPlayerId(Player::PlayerId::P1);
                 player1Tanks.push_back(tank);
-                boardData->player1Tanks.push_back(tank);
             } else if (board[i][j] == PLAYER2_TANK) {
                 int location[2] = {i, j};
                 int direction[2] = {0, -1}; // Default direction: left
                 Tank tank(location, direction);
                 tank.assignPlayerId(Player::PlayerId::P2);
                 player2Tanks.push_back(tank);
-                boardData->player2Tanks.push_back(tank);
             }
         }
     }
 }
 
 GameBoard::~GameBoard() {
-    delete boardData;
 }
 
 bool GameBoard::validateMove(const Action& action, int playerId) const {
     // Get the tank that's trying to move
-    Tank targetTank = action.getTargetTank();
+    const Tank& targetTank = action.target();
     const auto& tankLocation = targetTank.getInfo().location;
     
     // Check if the tank belongs to the player
-    const auto& playerTanks = (playerId == 1) ? boardData->player1Tanks : boardData->player2Tanks;
+    const auto& playerTanks = getPlayerTanks(playerId);
     bool isPlayerTank = false;
     
     for (const auto& tank : playerTanks) {
@@ -81,34 +80,6 @@ bool GameBoard::validateMove(const Action& action, int playerId) const {
     
     if (!isPlayerTank) return false;
 
-    // Check for shoot cooldown
-    if (action.getActionType() == Action::ActionType::SHOOT) {
-        auto it = tankShootCooldowns.find({tankLocation[0], tankLocation[1]});
-        if (it != tankShootCooldowns.end()) {
-            return false; // Tank is on cooldown
-        }
-    }
-
-    // Check for wall collision in movement actions
-    if (action.getActionType() == Action::ActionType::MOVE_FORWARD || 
-        action.getActionType() == Action::ActionType::MOVE_BACKWARD) {
-        const auto& dir = targetTank.getInfo().dir;
-        int newX = tankLocation[0];
-        int newY = tankLocation[1];
-        
-        if (action.getActionType() == Action::ActionType::MOVE_FORWARD) {
-            newX += dir[0];
-            newY += dir[1];
-        } else {
-            newX -= dir[0];
-            newY -= dir[1];
-        }
-        
-        if (isWall(newX, newY)) {
-            return false;
-        }
-    }
-    
     return true;
 }
 
@@ -117,9 +88,9 @@ void GameBoard::addToStepMoves(const Action& action, int playerId) {
         return;
     }
     
-    const auto& tankLocation = action.getTargetTank().getInfo().location;
+    const auto& tankLocation = action.target().getInfo().location;
     std::string moveStr = "Player " + std::to_string(playerId) + ": " + 
-                         std::to_string(static_cast<int>(action.getActionType())) +
+                         std::to_string(static_cast<int>(action.type())) +
                          " on tank at (" + 
                          std::to_string(tankLocation[0]) + "," +
                          std::to_string(tankLocation[1]) + ")";
@@ -134,13 +105,17 @@ void GameBoard::addToStepMoves(const Action& action, int playerId) {
     stepMoves.push_back(action);
 }
 
-char GameBoard::calculateNewPositionCharForTank(int x, int y) {
+char GameBoard::calculateNewPositionCharForTank(int x, int y, Player::PlayerId playerId) {
     char prevChar = board[x][y];
     
     // Check for collisions with different board elements
     switch (prevChar) {
         case BoardConstants::EMPTY_SPACE:
-            return BoardConstants::PLAYER1_TANK; // Default to player 1 tank if empty
+            if(playerId == Player::PlayerId::P1){
+                return BoardConstants::PLAYER1_TANK; // Default to player 1 tank if empty
+            } else {
+                return BoardConstants::PLAYER2_TANK; // Default to player 2 tank if empty
+            }
             
         case BoardConstants::PLAYER1_TANK:
         case BoardConstants::PLAYER2_TANK:
@@ -261,11 +236,23 @@ char GameBoard::calculateNewPositionCharForShell(int x, int y) {
 }
 
 void GameBoard::performActions() {
+    std::cout << "Processing " << stepMoves.size() << " actions..." << std::endl;
+    printBoard();
+
+    // Track which actions have been processed
+    std::vector<bool> processedActions(stepMoves.size(), false);
+
     // Process all moves in stepMoves
-    for (const auto& action : stepMoves) {
-        const auto& targetTank = action.getTargetTank();
+    for (size_t i = 0; i < stepMoves.size(); i++) {
+        // Skip if this action was already processed
+        if (processedActions[i]) {
+            continue;
+        }
+
+        const auto& action = stepMoves[i];
+        const auto& targetTank = action.target();
         const auto& tankInfo = targetTank.getInfo();
-        const auto& location = tankInfo.location;
+        const array<int,2> location = tankInfo.location;
 
         // Get reference to the actual tank in the board
         auto& tanks = (targetTank.getPlayerId() == Player::PlayerId::P1) ? 
@@ -277,108 +264,172 @@ void GameBoard::performActions() {
                 break;
             }
         }
-        if (!actualTank) continue; // Skip if tank not found
+        if (!actualTank) {
+            continue;
+        }
 
-        switch (action.getActionType()) {
-            case Action::ActionType::SHOOT: {
-                if(actualTank->getIsMovingBackward()){
-                    break;
-                }
+        // Mark this action as processed
+        processedActions[i] = true;
+
+        if(actualTank->getIsMovingBackward() && (action.type() != Action::Type::MOVE_FORWARD || action.type() != Action::Type::MOVE_BACKWARD)){
+            const_cast<Action&>(action).setType(Action::Type::MOVE_BACKWARD);
+        }
+        switch (action.type()) {
+            case Action::Type::SHOOT: {
+                std::cout << "Executing SHOOT action" << std::endl;
                 // Create a new shell
                 Shell* shell = actualTank->shoot();
                 if (shell) {
-                    // Add shell to boardData
-                    boardData->bulletsPositions.push_back(*shell);
+                    // Add shell to bullets
+                    bulletsPositions.push_back(*shell);
                     // Set cooldown for the tank
-                    tankShootCooldowns[{location[0], location[1]}] = BoardConstants::SHOOT_COOLDOWN;
+                    tankShootCooldowns[std::make_pair(location[0], location[1])] = BoardConstants::SHOOT_COOLDOWN;
                     delete shell;
+                    std::cout << "Shell created and added to board" << std::endl;
                 }
                 break;
             }
-            case Action::ActionType::MOVE_FORWARD: {
+            case Action::Type::MOVE_FORWARD: {
                 if(actualTank->getIsMovingBackward()){
                     actualTank->moveForward();
                     break;
                 }
                 // Calculate new position
-                actualTank->move();
-                const auto& newLocation = actualTank->getInfo().location;
-                int newX = newLocation[0];
-                int newY = newLocation[1];
+                array<int,2> newLocation = location;
+                newLocation[0] += tankInfo.dir[0];
+                newLocation[1] += tankInfo.dir[1];
                 
-                // Handle the previous position
-                board[location[0]][location[1]] = handleMultipleTanksPosition(location[0], location[1]);
+                // Handle wrap-around
+                if (newLocation[0] < 0) newLocation[0] = BOARD_WIDTH - 1;
+                if (newLocation[0] >= BOARD_WIDTH) newLocation[0] = 0;
+                if (newLocation[1] < 0) newLocation[1] = BOARD_HEIGHT - 1;
+                if (newLocation[1] >= BOARD_HEIGHT) newLocation[1] = 0;
+
+                // Check what's in the new position
+                char newPosChar = board[newLocation[0]][newLocation[1]];
                 
-                // Handle the new position
-                char newPos = calculateNewPositionCharForTank(newX, newY);
-                board[newX][newY] = newPos;
+                if (newPosChar == BoardConstants::PLAYER1_TANK || 
+                          newPosChar == BoardConstants::PLAYER2_TANK || newPosChar == BoardConstants::MULTIPLE_TANKS) {
+                    // Check if the tank in that position has a pending move
+                    bool shouldSkip = false;
+                    for (size_t j = 0; j < stepMoves.size(); j++) {
+                        if (processedActions[j]) continue; // Skip already processed actions
+                        
+                        const auto& pendingAction = stepMoves[j];
+                        if (pendingAction.target().getInfo().location == newLocation) {
+                            // Check if tanks are moving towards each other
+                            const auto& otherTankDir = pendingAction.target().getInfo().dir;
+                            if (otherTankDir[0] == -tankInfo.dir[0] && otherTankDir[1] == -tankInfo.dir[1]) {
+                                // Tanks are moving towards each other, skip this move
+                                shouldSkip = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!shouldSkip) {
+                        // Other tank is moving away or not moving, proceed with move
+                        actualTank->move();
+                        board[location[0]][location[1]] = handleMultipleTanksPosition(location[0], location[1]);
+                        board[newLocation[0]][newLocation[1]] = calculateNewPositionCharForTank(newLocation[0], newLocation[1], actualTank->getPlayerId());
+                    }
+                } else {
+                    // Empty space, proceed with move
+                    actualTank->move();
+                    board[location[0]][location[1]] = handleMultipleTanksPosition(location[0], location[1]);
+                    board[newLocation[0]][newLocation[1]] = calculateNewPositionCharForTank(newLocation[0], newLocation[1], actualTank->getPlayerId());
+                }
                 break;
             }
-            case Action::ActionType::MOVE_BACKWARD: {
+            case Action::Type::MOVE_BACKWARD: {
                 if(!actualTank->getIsMovingBackward()){
                     actualTank->moveBackward();
                     break;
                 }
                 else if (actualTank->getIsMovingBackward() && actualTank->getMoveBackwardCooldown() > 0) {
                     actualTank->decreaseMoveBackwardCooldown();
-                    break; // Can't move backward if cooldown is active
-                }
-                // Calculate new position
-                actualTank->move();
-                const auto& newLocation = actualTank->getInfo().location;
-                int newX = newLocation[0];
-                int newY = newLocation[1];
-                
-                // Handle the previous position
-                board[location[0]][location[1]] = handleMultipleTanksPosition(location[0], location[1]);
-                
-                // Handle the new position
-                char newPos = calculateNewPositionCharForTank(newX, newY);
-                board[newX][newY] = newPos;
-                break;
-            }
-            case Action::ActionType::TURN_R_45: {
-                if(actualTank->getIsMovingBackward()){
                     break;
                 }
+                actualTank->setFinishedMoveBackward();
+                // Calculate new position
+                array<int,2> newLocation = location;
+                newLocation[0] -= tankInfo.dir[0];
+                newLocation[1] -= tankInfo.dir[1];
+                
+                // Handle wrap-around
+                if (newLocation[0] < 0) newLocation[0] = BOARD_WIDTH - 1;
+                if (newLocation[0] >= BOARD_WIDTH) newLocation[0] = 0;
+                if (newLocation[1] < 0) newLocation[1] = BOARD_HEIGHT - 1;
+                if (newLocation[1] >= BOARD_HEIGHT) newLocation[1] = 0;
+
+                // Check what's in the new position
+                char newPosChar = board[newLocation[0]][newLocation[1]];
+                
+                if (newPosChar == BoardConstants::PLAYER1_TANK || newPosChar == BoardConstants::PLAYER2_TANK) {
+                    // Check if the tank in that position has a pending move
+                    bool shouldSkip = false;
+                    for (size_t j = 0; j < stepMoves.size(); j++) {
+                        if (processedActions[j]) continue; // Skip already processed actions
+                        
+                        const auto& pendingAction = stepMoves[j];
+                        if (pendingAction.target().getInfo().location == newLocation) {
+                            // Check if tanks are moving towards each other
+                            const auto& otherTankDir = pendingAction.target().getInfo().dir;
+                            if (otherTankDir[0] == tankInfo.dir[0] && otherTankDir[1] == tankInfo.dir[1]) {
+                                // Tanks are moving towards each other, skip this move
+                                shouldSkip = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!shouldSkip) {
+                        // Other tank is moving away or not moving, proceed with move
+                        actualTank->move();
+                        board[location[0]][location[1]] = handleMultipleTanksPosition(location[0], location[1]);
+                        board[newLocation[0]][newLocation[1]] = calculateNewPositionCharForTank(newLocation[0], newLocation[1], actualTank->getPlayerId());
+                    }
+                } else {
+                    // Empty space, proceed with move
+                    actualTank->move();
+                    board[location[0]][location[1]] = handleMultipleTanksPosition(location[0], location[1]);
+                    board[newLocation[0]][newLocation[1]] = calculateNewPositionCharForTank(newLocation[0], newLocation[1], actualTank->getPlayerId());
+                }
+                break;
+            }
+            case Action::Type::TURN_R_45: {
                 actualTank->turn(Turn::RIGHT_45);
                 break;
             }
-            case Action::ActionType::TURN_R_90: {
-                if(actualTank->getIsMovingBackward()){
-                    break;
-                }
+            case Action::Type::TURN_R_90: {
                 actualTank->turn(Turn::RIGHT_90);
                 break;
             }
-            case Action::ActionType::TURN_L_45: {
-                if(actualTank->getIsMovingBackward()){
-                    break;
-                }
+            case Action::Type::TURN_L_45: {
                 actualTank->turn(Turn::LEFT_45);
                 break;
             }
-            case Action::ActionType::TURN_L_90: {
-                if(actualTank->getIsMovingBackward()){
-                    break;
-                }
+            case Action::Type::TURN_L_90: {
                 actualTank->turn(Turn::LEFT_90);
                 break;
             }
-            case Action::ActionType::NOP:
+            case Action::Type::NOP:
                 break;
             default:
                 cerr << "Unknown action type" << endl;
                 break;
         }
+        if(action.type() != Action::Type::MOVE_BACKWARD){
+            actualTank->cancelMoveBackward();
+        }
     }
     
     // Clear the step moves after processing
     stepMoves.clear();
+    std::cout << "All actions processed. This is the board after processing actions:" << std::endl;
+    printBoard();
 }
 
 bool GameBoard::isShellAtPosition(int x, int y) const {
-    for (const auto& shell : boardData->bulletsPositions) {
+    for (const auto& shell : bulletsPositions) {
         const auto& location = shell.getInfo().location;
         if (location[0] == x && location[1] == y) {
             return true;
@@ -389,9 +440,56 @@ bool GameBoard::isShellAtPosition(int x, int y) const {
 
 void GameBoard::moveShells() {
     // Create a copy of bulletsPositions to iterate over
-    auto bullets = boardData->bulletsPositions;
+    auto bullets = bulletsPositions;
+    bulletsPositions.clear(); // Clear the original list to rebuild it
     
-    for (auto& shell : bullets) {
+    // First pass: check for adjacent shells moving towards each other
+    std::vector<bool> shellsToKeep(bullets.size(), true);
+    for (size_t i = 0; i < bullets.size(); i++) {
+        if (!shellsToKeep[i]) continue; // Skip if already marked for removal
+        
+        const auto& shell1 = bullets[i];
+        const auto& loc1 = shell1.getInfo().location;
+        const auto& dir1 = shell1.getInfo().dir;
+        
+        for (size_t j = i + 1; j < bullets.size(); j++) {
+            if (!shellsToKeep[j]) continue; // Skip if already marked for removal
+            
+            const auto& shell2 = bullets[j];
+            const auto& loc2 = shell2.getInfo().location;
+            const auto& dir2 = shell2.getInfo().dir;
+            
+            // Calculate Manhattan distance between shells
+            int dx = abs(loc1[0] - loc2[0]);
+            int dy = abs(loc1[1] - loc2[1]);
+            
+            // Check if shells are adjacent (including diagonal) and moving towards each other
+            if ((dx <= 1 && dy <= 1) && (dx + dy) > 0) { // Adjacent (including diagonal)
+                if (dir1[0] == -dir2[0] && dir1[1] == -dir2[1]) { // Moving towards each other
+                    std::cout << "Shells are adjacent and moving towards each other" << std::endl;
+                    std::cout << "Shell 1: " << loc1[0] << ", " << loc1[1] << " with direction " << dir1[0] << ", " << dir1[1] << std::endl;
+                    std::cout << "Shell 2: " << loc2[0] << ", " << loc2[1] << " with direction " << dir2[0] << ", " << dir2[1] << std::endl;
+                    shellsToKeep[i] = false;
+                    shellsToKeep[j] = false;
+                    // Handle shell1
+                    if (!shell1.getJustFired()) {
+                        board[loc1[0]][loc1[1]] = BoardConstants::EMPTY_SPACE;
+                    }
+                    
+                    // Handle shell2
+                    if (!shell2.getJustFired()) {
+                        board[loc2[0]][loc2[1]] = BoardConstants::EMPTY_SPACE;
+                    }
+                }
+            }
+        }
+    }
+    
+    // Second pass: move remaining shells
+    for (size_t i = 0; i < bullets.size(); i++) {
+        if (!shellsToKeep[i]) continue; // Skip shells marked for removal
+        
+        auto& shell = bullets[i];
         // Get current position
         const auto& location = shell.getInfo().location;
         int prevX = location[0];
@@ -431,7 +529,9 @@ void GameBoard::moveShells() {
                     // Shell collisions case - check if there are still shells
                     {
                         int shellCount = 0;
-                        for (const auto& otherShell : bullets) {
+                        for (size_t j = 0; j < bullets.size(); j++) {
+                            if (!shellsToKeep[j]) continue;
+                            const auto& otherShell = bullets[j];
                             const auto& otherLocation = otherShell.getInfo().location;
                             if (otherLocation[0] == prevX && otherLocation[1] == prevY) {
                                 shellCount++;
@@ -440,27 +540,42 @@ void GameBoard::moveShells() {
                         board[prevX][prevY] = (shellCount > 1) ? BoardConstants::SHELL_AND_SHELL : BoardConstants::SHELL;
                     }
                     break;
-                    
+                case BoardConstants::PLAYER1_TANK:
+                    if(shell.getJustFired()){
+                        board[prevX][prevY] = BoardConstants::PLAYER1_TANK;
+                        shell.setJustFired(false);
+                    }
+                    break;
+                case BoardConstants::PLAYER2_TANK:
+                    if(shell.getJustFired()){
+                        board[prevX][prevY] = BoardConstants::PLAYER2_TANK;
+                        shell.setJustFired(false);
+                    }
+                    break;
                 default:
                     // For any other case, set to empty space
                     board[prevX][prevY] = BoardConstants::EMPTY_SPACE;
                     break;
             }
+            shell.setJustFired(false);
         }
         
         // Handle the new position
         board[newX][newY] = calculateNewPositionCharForShell(newX, newY);
+        
+        // Add the moved shell to the updated list
+        bulletsPositions.push_back(shell);
     }
 }
 
 void GameBoard::removeBulletsAtPosition(int x, int y) {
-    boardData->bulletsPositions.erase(
-        std::remove_if(boardData->bulletsPositions.begin(), boardData->bulletsPositions.end(),
+    bulletsPositions.erase(
+        std::remove_if(bulletsPositions.begin(), bulletsPositions.end(),
             [x, y](const Shell& shell) {
                 const auto& location = shell.getInfo().location;
                 return location[0] == x && location[1] == y;
             }),
-        boardData->bulletsPositions.end()
+        bulletsPositions.end()
     );
 }
 
@@ -490,7 +605,7 @@ void GameBoard::moveTankBack(int x, int y) {
         if (location[0] == x && location[1] == y) {
             tank.moveBack();
             const auto& prevPos = tank.getPrevPosition();
-            board[prevPos[0]][prevPos[1]] = calculateNewPositionCharForTank(prevPos[0], prevPos[1]);
+            board[prevPos[0]][prevPos[1]] = calculateNewPositionCharForTank(prevPos[0], prevPos[1], tank.getPlayerId());
             backwardMoves.push_back({prevPos[0], prevPos[1]});
         }
     }
@@ -500,7 +615,7 @@ void GameBoard::moveTankBack(int x, int y) {
         if (location[0] == x && location[1] == y) {
             tank.moveBack();
             const auto& prevPos = tank.getPrevPosition();
-            board[prevPos[0]][prevPos[1]] = calculateNewPositionCharForTank(prevPos[0], prevPos[1]);
+            board[prevPos[0]][prevPos[1]] = calculateNewPositionCharForTank(prevPos[0], prevPos[1], tank.getPlayerId());
             backwardMoves.push_back({prevPos[0], prevPos[1]});
         }
     }
@@ -508,7 +623,7 @@ void GameBoard::moveTankBack(int x, int y) {
 
 int GameBoard::countShellsAtPosition(int x, int y) const {
     int count = 0;
-    for (const auto& shell : boardData->bulletsPositions) {
+    for (const auto& shell : bulletsPositions) {
         const auto& location = shell.getInfo().location;
         if (location[0] == x && location[1] == y) {
             count++;
@@ -568,6 +683,7 @@ void GameBoard::handleCollision(int i, int j, char currentChar) {
                 // One shell - wall becomes damaged
                 board[i][j] = BoardConstants::DAMAGED_WALL;
             }
+            removeBulletsAtPosition(i, j);
             break;
         }
         
@@ -641,6 +757,7 @@ void GameBoard::handleCollision(int i, int j, char currentChar) {
 }
 
 void GameBoard::handleCollisions() {
+    std::cout << "Handling collisions..." << std::endl;
     // Clear backward moves from previous step
     backwardMoves.clear();
     
@@ -649,6 +766,7 @@ void GameBoard::handleCollisions() {
         for (int j = 0; j < width; j++) {
             char currentChar = board[i][j];
             if (BoardConstants::isCollision(currentChar)) {
+                std::cout << "Handling collision at (" << i << "," << j << "): " << currentChar << std::endl;
                 handleCollision(i, j, currentChar);
             }
         }
@@ -658,6 +776,7 @@ void GameBoard::handleCollisions() {
     for (const auto& pos : backwardMoves) {
         char currentChar = board[pos.first][pos.second];
         if (BoardConstants::isCollision(currentChar)) {
+            std::cout << "Handling backward move collision at (" << pos.first << "," << pos.second << ")" << std::endl;
             handleCollision(pos.first, pos.second, currentChar);
         }
     }
@@ -674,17 +793,38 @@ void GameBoard::handleCollisions() {
         player2Tanks.end()
     );
 
+    std::cout << "Tanks after cleanup: P1=" << player1Tanks.size() << " P2=" << player2Tanks.size() << std::endl;
+
     // Check if game is over after handling collisions
     checkGameOver();
+    std::cout << "Collision handling complete" << std::endl;
 }
 
 void GameBoard::executeStep() {
-    performActions();
+    std::cout << "Executing game step..." << std::endl;
     moveShells();
+    std::cout << "Shells moved" << std::endl;
     handleCollisions();
-    
+    if (gameOver) {
+        std::cout << "Game over" << std::endl;
+        return;
+    }
+    std::cout << "Collisions handled" << std::endl;
+    moveShells();
+    std::cout << "Shells moved again" << std::endl;
+    handleCollisions();
+    if (gameOver) {
+        std::cout << "Game over" << std::endl;
+        return;
+    }
+    std::cout << "Collisions handled again" << std::endl;
+    performActions();
+    std::cout << "Actions performed" << std::endl;
+    handleCollisions();
+    std::cout << "Collisions handled third time" << std::endl;
     // Update cooldowns
     updateCooldowns();
+    std::cout << "Cooldowns updated" << std::endl;
 }
 
 vector<pair<int, int>> GameBoard::getPlayerTankPositions(int playerId) const {
@@ -768,19 +908,27 @@ char GameBoard::handleMultipleTanksPosition(int x, int y) {
         }
     }
     
-    // If there's still more than one tank, keep MULTIPLE_TANKS
+    // Check if there are any shells at this position
+    bool hasShell = isShellAtPosition(x, y);
+    
+    // If there's still more than one tank
     if ((p1TankCount + p2TankCount) > 1) {
-        return BoardConstants::MULTIPLE_TANKS;
+        return hasShell ? BoardConstants::MULTIPLE_TANKS_AND_SHELL : BoardConstants::MULTIPLE_TANKS;
     }
     
-    // If only one tank remains, return the appropriate player tank character
+    // If only one tank remains
     if (p1TankCount == 1) {
-        return BoardConstants::PLAYER1_TANK;
+        return hasShell ? BoardConstants::SHELL_AND_TANK : BoardConstants::PLAYER1_TANK;
     } else if (p2TankCount == 1) {
-        return BoardConstants::PLAYER2_TANK;
+        return hasShell ? BoardConstants::SHELL_AND_TANK : BoardConstants::PLAYER2_TANK;
     }
     
-    // If no tanks remain (shouldn't happen in this context)
+    // If no tanks remain but there's a shell
+    if (hasShell) {
+        return BoardConstants::SHELL;
+    }
+    
+    // If nothing remains
     return BoardConstants::EMPTY_SPACE;
 }
 
@@ -818,4 +966,15 @@ bool GameBoard::checkGameOver() {
     }
 
     return false;
+}
+
+void GameBoard::printBoard() const {
+    std::cout << "\nCurrent Board State:" << std::endl;
+    for (const auto& row : board) {
+        for (char c : row) {
+            std::cout << c;
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
 }

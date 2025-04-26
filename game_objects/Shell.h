@@ -4,7 +4,10 @@
 class Shell: public Moveable
 {
 private:
+    bool justFired;
 public:
-    Shell(int location[2], int direction[2]);
-    ~Shell();
+    Shell(int lc[2], int d[2]);
+    ~Shell() override = default;
+    void setJustFired(bool value) { justFired = value; }
+    bool getJustFired() const { return justFired; }
 };

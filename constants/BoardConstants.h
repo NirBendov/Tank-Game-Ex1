@@ -39,14 +39,14 @@ namespace BoardConstants {
     // Game rules
     const int NUMBER_OF_TANKS_PER_PLAYER = 1;
     const int SHOOT_COOLDOWN = 5;
-    const int MOVE_BACKWARD_COOLDOWN = 3;
+    const int MOVE_BACKWARD_COOLDOWN = 2;
 
     // Global board dimensions
-    extern int BOARD_HEIGHT;
-    extern int BOARD_WIDTH;
+    extern const int BOARD_HEIGHT;
+    extern const int BOARD_WIDTH;
 
     // Helper function to check if a character represents a collision
-    bool isCollision(char c) {
+    inline bool isCollision(char c) {
         return c != WALL && c != DAMAGED_WALL && c != MINE && 
                c != EMPTY_SPACE && c != PLAYER1_TANK && c != PLAYER2_TANK && 
                c != SHELL;

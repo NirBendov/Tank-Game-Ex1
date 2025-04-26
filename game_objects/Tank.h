@@ -2,17 +2,20 @@
 
 #include "Moveable.h"
 #include "Shell.h"
-#include "Direction.h"           // for Turn
+#include "Direction.h"           
 #include "../algorithms/Algorithm.h"
 #include "../player/Player.h"
-using namespace BoardConstants;
+#include "../constants/BoardConstants.h"
+
 class Tank : public Moveable {
 private:
     int ammoCount;
     Algorithm *algo;
     Player::PlayerId playerId;
     int moveBackwardCooldown;
-    bool isMovingBackward;
+    int shootingCooldown;
+    bool isMovingBackward = false;
+    bool finishedMoveBackward = false;
     bool isTankAlive = true;
 public:
     Tank(int lc[2], int d[2]);
@@ -40,9 +43,18 @@ public:
         isMovingBackward = true;
         moveBackwardCooldown = BoardConstants::MOVE_BACKWARD_COOLDOWN;
     }
-    bool getIsMovingBackward() const { return isMovingBackward; }
+    bool getIsMovingBackward() const { return isMovingBackward && !finishedMoveBackward; }
+    bool getFinishedMoveBackward() const { return finishedMoveBackward; }
+    void setFinishedMoveBackward() { finishedMoveBackward = true; }
+    void cancelMoveBackward() {
+        isMovingBackward = false;
+        moveBackwardCooldown = BoardConstants::MOVE_BACKWARD_COOLDOWN;
+        finishedMoveBackward = false;
+    }
     bool getIsTankAlive() const { return isTankAlive; }
     void killTank() { isTankAlive = false; }
+    void decreaseShootingCooldown();
+    int getShootingCooldown();
 };
 
 static constexpr int MAX_AMMO = 16;

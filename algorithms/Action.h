@@ -1,24 +1,26 @@
 #pragma once
-#include "../game_objects/Tank.h"
+
+class Tank;
 
 class Action {
 public:
     enum class Type {
         NOP,
-        Shoot,
-        MoveForward,
-        MoveBackward,
-        TurnR45,
-        TurnR90,
-        TurnL45,
-        TurnL90
+        SHOOT,
+        MOVE_FORWARD,
+        MOVE_BACKWARD,
+        TURN_R_45,
+        TURN_R_90,
+        TURN_L_45,
+        TURN_L_90
     };
 
     Action(Type type, const Tank& target)
       : type_(type), target_(target) {}
 
-    Type        type()   const noexcept { return type_; }
-    const Tank& target() const noexcept { return target_; }
+    Type type()   const noexcept { return type_; }
+    const Tank&  target() const noexcept { return target_; }
+    void setType(Type newType) noexcept { type_ = newType; }
 
 private:
     Type        type_;

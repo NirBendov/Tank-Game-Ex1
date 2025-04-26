@@ -5,11 +5,11 @@
 #include "../algorithms/Action.h"
 
 class GameTest {
-private:
+protected:
     std::string testName;
     std::vector<std::vector<char>> initialBoard;
-    std::vector<Action> player1Moves;
-    std::vector<Action> player2Moves;
+    std::vector<Action::Type> player1MoveTypes;
+    std::vector<Action::Type> player2MoveTypes;
     int expectedWinner;
     std::vector<GameBoard::TankDeath> expectedDeaths;
 
@@ -20,11 +20,14 @@ private:
 public:
     GameTest(const std::string& name, 
              const std::vector<std::vector<char>>& board,
-             const std::vector<Action>& p1Moves,
-             const std::vector<Action>& p2Moves,
+             const std::vector<Action::Type>& p1MoveTypes,
+             const std::vector<Action::Type>& p2MoveTypes,
              int winner,
-             const std::vector<GameBoard::TankDeath>& deaths);
+             const std::vector<GameBoard::TankDeath>& deaths)
+        : testName(name), initialBoard(board), 
+          player1MoveTypes(p1MoveTypes), player2MoveTypes(p2MoveTypes),
+          expectedWinner(winner), expectedDeaths(deaths) {}
 
-    bool execute() const;
+    virtual bool execute() const;
     std::string getName() const { return testName; }
 }; 

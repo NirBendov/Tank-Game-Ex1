@@ -1,0 +1,30 @@
+#pragma once
+
+#include <vector>
+#include <queue>
+#include <stack>
+#include <algorithm>
+#include <cmath>
+#include "./constants/BoardConstants.h"
+#include "./game_objects/Direction.h"
+
+using namespace std;
+
+struct Point {
+    int x, y;
+    bool operator==(const Point& other) const {
+        return x == other.x && y == other.y;
+    }
+};
+
+struct Node {
+    Point pt;
+    int dist;
+};
+
+bool isValid(int x, int y, const vector<vector<int>>& grid, const vector<vector<bool>>& visited, bool includeWalls);
+Point wrapPoint(int x, int y, int rows, int cols);
+vector<Point> directPathFinder(Point start, Point end, int rows, int columns);
+vector<Point> bfsPathfinder(const vector<vector<int>>& grid, Point start, Point end, bool includeWalls);
+int dist(Point p1, Point p2);
+vector<Point> updatePath(vector<Point> &path, Point &newEnd);

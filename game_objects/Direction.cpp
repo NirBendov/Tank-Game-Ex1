@@ -6,21 +6,35 @@
 
 using namespace std;
 
-int vectorMultiply(int d1[2], int d2[2]) {
+int vectorMultiply(array<int, 2> d1, array<int, 2> d2) {
     return d1[0] * d2[0] + d1[1] * d2[1];
 }
 
-int inverseMap(int d[2]) {
+int inverseMap(array<int, 2> d) {
     for(int i = 0; i < 8; ++i) {
-        if (directions[i] == d) {
+        if (directions[i][0] == d[0] && directions[i][1] == d[1]) {
             return i;
         }
     }
+    return -1; // Return -1 if direction not found
 }
 
-int *getDirection(int d[2], Turn t) {
+array<int, 2> getDirection(array<int, 2> d, Turn t) {
     int index = inverseMap(d);
-    return (int*)d[(index + t)%8];
+    if (index == -1) {
+        // If direction not found, return original direction
+        return d;
+    }
+    
+    // Calculate new index with wrap-around
+    int newIndex = (index + t + 8) % 8;
+    
+    // Create a new array to hold the result
+    static array<int, 2> result;
+    result[0] = directions[newIndex][0];
+    result[1] = directions[newIndex][1];
+    
+    return result;
 }
 
 bool isInBulletPath(array<int, 2> start, array<int, 2> trajectory, array<int, 2> end, GameBoard *gameBoard) {
@@ -35,5 +49,7 @@ bool isInBulletPath(array<int, 2> start, array<int, 2> trajectory, array<int, 2>
     int x = trajectory[0] != 0 ? start[0] : end[0];
     int y = trajectory[0] != 0 ? start[1] : end[1];
     for (int i = m; i <= n; ++i) {
+        // TODO: Implement bullet path checking
     }
+    return true;
 }

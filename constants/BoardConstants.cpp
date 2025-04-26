@@ -1,6 +1,6 @@
-#include "BoardConstants.h"
+#include "boardconstants.h"
 
 namespace BoardConstants {
-    int BOARD_HEIGHT = 0;
-    int BOARD_WIDTH = 0;
+    const int BOARD_HEIGHT = 8;
+    const int BOARD_WIDTH = 5;
 } 
