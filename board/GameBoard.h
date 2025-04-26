@@ -6,6 +6,7 @@
 #include "../game_objects/Shell.h"
 #include "../algorithms/Action.h"
 #include <map>
+#include "../constants/BoardConstants.h"
 
 using namespace std;
 
@@ -74,4 +75,7 @@ public:
 
     // Print the current state of the board
     void printBoard() const;
+
+    // Add getBoard method
+    const vector<vector<char>>& getBoard() const { return board; }
 }; 
