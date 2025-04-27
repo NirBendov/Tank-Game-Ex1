@@ -39,8 +39,11 @@ array<int, 2> getDirection(array<int, 2> d, Turn t) {
 }
 
 bool isInBulletPath(array<int, 2> start, array<int, 2> trajectory, array<int, 2> end, GameBoard *gameBoard) {
-    int dy = start[0] - end[0];
-    int dx = start[1] - end[1];
+    int dy = end[0] - start[0];
+    int dx = end[1] - start[1];
+    if ((dx != 0 && trajectory[1] != 0 && dy/dx != trajectory[0]/trajectory[1]) 
+    || (dy != 0 && trajectory[0] && dy/dx != trajectory[1]/trajectory[0])) 
+        return false;
     dy = dy == 0 ? dy : dy/abs(dy);
     dx = dx == 0 ? dx : dx/abs(dx);
     if (!(trajectory[0] == dy && trajectory[1] == dx))
