@@ -38,7 +38,7 @@ void Tank::assignAlgorithm(Algorithm *a) {
     algo = a;
 }
 
-const Algorithm* Tank::getAlgorithm() const {
+Algorithm* Tank::getAlgorithm() const {
     return algo;
 }
 
@@ -60,6 +60,7 @@ int Tank::getShootingCooldown() {
     return shootingCooldown;
 }
 
-int Tank::getAmmoCount() {
-    return ammoCount;
+void Tank::doNothing() {
+    decreaseShootingCooldown();
+    decreaseMoveBackwardCooldown();
 }

@@ -6,17 +6,21 @@
 #include "./constants/BoardConstants.h"
 #include "./board/GameBoard.h"
 #include "PathFinder.h"
+#include "Direction.h"
 #include <array>
 #include <vector>
 
 using namespace std;
 
-AlgorithmPlayerTwo::AlgorithmPlayerTwo(int playerId, GameBoard *gameBoard, Tank *tank)
-    : Algorithm(playerId, gameBoard), mode(OperationMode::CHASE), tank(tank) {
+AlgorithmPlayerTwo::AlgorithmPlayerTwo(int playerId, GameBoard *gameBoard)
+    : Algorithm(playerId, gameBoard), mode(OperationMode::CHASE) {
+    *tank = gameBoard->getPlayerTanks(playerId)[0];
+    tank->assignAlgorithm(this);
+
     array<int,2> tankLocation = tank->getInfo().location;
     Point tankPoint = {tankLocation[0], tankLocation[1]};
     pair<int, int> enemyTankLocation = (*gameBoard).getEnemyTankPositions(Player::PlayerId::P1)[0];
-    Point enemyTankPoint = {enemyTankLocation.second, enemyTankLocation.first};
+    Point enemyTankPoint = {enemyTankLocation.first, enemyTankLocation.second};
 
     pathToEnemy = bfsPathfinder(gameBoard->getBoard(), tankPoint, enemyTankPoint, false);
 }
@@ -32,22 +36,41 @@ void AlgorithmPlayerTwo::defaultMode() {
 
 vector<Action> AlgorithmPlayerTwo::decideNextActions() {
     vector<Action> actions;
+    if (mode == OperationMode::PANIC)
+        actions.push_back(panicRoutine());
+    else
+        actions.push_back(regularRoutine());
+    return actions;
+} 
+
+/* In the rare case where there is not path from one tank
+ * to another, not even by breaking walls, the algorithm
+ * will enter panic mode and finish all the tank's ammo as fast as possible
+*/
+Action AlgorithmPlayerTwo::panicRoutine() {
+    if (tank->getShootingCooldown() == 0 && tank->getAmmoCount() > 0) {
+        return {Action::Type::SHOOT, *tank};
+    }
+    return {Action::Type::NOP, *tank};
+}
+
+Action AlgorithmPlayerTwo::regularRoutine() {
+    pair<int, int> enemyPosition = gameBoard->getEnemyTankPositions(playerId)[0];
+    Point enemy = {enemyPosition.first, enemyPosition.second};
+    updatePathEnd(pathToEnemy, enemy);
     
     // If we're in the middle of a backward move
     if (isMovingBackward) {
         if (backwardMoveTurnsLeft > 0) {
             backwardMoveTurnsLeft--;
-            actions.push_back(Action(Action::Type::MOVE_BACKWARD, *tank));
-            return actions;
+            return Action(Action::Type::NOP, *tank);
         } else {
             isMovingBackward = false;
+            return Action(Action::Type::MOVE_BACKWARD, *tank);
         }
     }
 
-    // Get tank positions
-    // vector<Tank> myTanks = (*gameBoard).getPlayerTankPositions(Player::PlayerId::P2);
-    // vector<Tank> enemyTanks = (*gameBoard).getEnemyTankPositions(Player::PlayerId::P1);
-    vector<Shell> shells = (*gameBoard).getBullets();
+    vector<Shell> shells = gameBoard->getBullets();
 
     array<int,2> tankLocation = tank->getInfo().location;
     for (Shell shell : shells) {
@@ -56,51 +79,73 @@ vector<Action> AlgorithmPlayerTwo::decideNextActions() {
         if (isInBulletPath(shellInfo.location, shellInfo.dir, tankLocation, gameBoard)) {
             dangerousDirections.push_back(shellInfo.dir);
             Action::Type move = possibleDodgeMove(*tank, shell);
-            actions.push_back({move, *tank});
             mode = OperationMode::DODGE;
-            break;
+            return {move, *tank};
         }
     }
 
-    // For now, just return a simple action for the first tank
-    // if (!myTanks.empty()) {
-    //     actions.push_back(Action(Action::Type::NOP, myTanks[0]));
-    // }
-    return actions;
-} 
+    if (mode != OperationMode::DODGE) {
+        vector<vector<char>> board = gameBoard->getBoard();
+        int rows = board.size();
+        int columns = board[0].size();
 
-/* In the rare case where there is not path from one tank
- * to another, not even by breaking walls, the algorithm
- * will enter panic mode and finish all the tank's ammo as fast as possible
-*/
-Action::Type AlgorithmPlayerTwo::panicRoutine() {
-    if (tank->getShootingCooldown() == 0 && tank->getAmmoCount() > 0) {
-        return Action::Type::SHOOT;
+        mode = OperationMode::CHASE;
+        if (isPathStraight(pathToEnemy, rows, columns)) {
+            array<int,2> pathDir = calcDirection(pathToEnemy, rows, columns);
+            array<int,2> dir = tank->getInfo().dir;
+            if (isPathClear(pathToEnemy, board)) {
+                if (pathDir == dir) {
+                    mode = OperationMode::HUNT;
+                    return {Action::Type::SHOOT, *tank};
+                }
+                else {
+                    Turn t = rotation(dir, pathDir);
+                    return {turnToAction(t), *tank};
+                }
+            }
+        }
+        return {followPath(), *tank};
     }
-    return Action::Type::NOP;
+
+    // For now, just return a simple action for the first tank
+    return {Action::Type::NOP, *tank};
 }
 
+// Don't return to the same tile you just escaped from
 void AlgorithmPlayerTwo::addTileToAvoid() {
     array<int,2> tankPosition = tank->getInfo().location;
     tilesToAvoid.push_back({tankPosition[1], tankPosition[0]});
 }
 
-void AlgorithmPlayerTwo::removeTileToAvoid(Point &p) {
-    if (gameBoard->getBoard()[p.x][p.y] == BoardConstants::SHELL)
-        tilesToAvoid.erase(find(tilesToAvoid.begin(), tilesToAvoid.end(), p));
+// Tile should be safe again after the shell already passed
+void AlgorithmPlayerTwo::removeTilesToAvoid() {
+    vector<Point>::iterator it = tilesToAvoid.begin();
+    while(it != tilesToAvoid.end()) {
+        Point p = *it;
+        if (gameBoard->getBoard()[p.x][p.y] == BoardConstants::SHELL)
+            tilesToAvoid.erase(find(tilesToAvoid.begin(), tilesToAvoid.end(), p));
+        else
+            it++;
+    }
+}
+
+void AlgorithmPlayerTwo::update() {
+    removeTilesToAvoid();
+    if (pathToEnemy.empty())
+        mode = OperationMode::PANIC;
 }
 
 /***decide on an action when evading a shell
  * basic dodging, only escapes the first shell in its path
 ***/
 Action::Type AlgorithmPlayerTwo::possibleDodgeMove(Tank &tank, Shell &shell) {
-    int rows = gameBoard->getBoard().size();
-    int columns = gameBoard->getBoard()[0].size();
+    vector<vector<char>> board = gameBoard->getBoard();
+    int rows = board.size();
+    int columns = board[0].size();
 
     array<int,2> dir = tank.getInfo().dir;
     array<int,2> location = tank.getInfo().location;
     array<int,2> shellDir = shell.getInfo().dir;
-    vector<vector<char>> board = gameBoard->getBoard();
     int res = vectorMultiply(dir, shellDir);
 
     const TurnToAction lightTurns[4] = {
@@ -120,11 +165,12 @@ Action::Type AlgorithmPlayerTwo::possibleDodgeMove(Tank &tank, Shell &shell) {
     && (board[(location[0] + dir[0])%rows][(location[1] + dir[1])%columns] == BoardConstants::EMPTY_SPACE)
     && std::find(tilesToAvoid.begin(), tilesToAvoid.end(), p) == tilesToAvoid.end()) {
         // Move out of the shell's path if possible
+        updatePathStart(pathToEnemy, p);
         return Action::Type::MOVE_FORWARD;
     }
     for (TurnToAction t: lightTurns) {
         array<int,2> newDir = getDirection(dir, t.turn);
-        if (board[location[0] + newDir[0]][location[1] + newDir[1]] == BoardConstants::EMPTY_SPACE
+        if (board[(location[0] + newDir[0])%rows][(location[1] + newDir[1])%columns] == BoardConstants::EMPTY_SPACE
         && vectorMultiply(newDir, shellDir) != -2) {
             // Turn towards an open tile to move to
             return t.actionType;
@@ -135,7 +181,7 @@ Action::Type AlgorithmPlayerTwo::possibleDodgeMove(Tank &tank, Shell &shell) {
         return Action::Type::SHOOT;
     }
     if (res != 2 && res != -2
-    && board[location[0] + dir[0]][location[1] + dir[1]] == BoardConstants::DAMAGED_WALL
+    && board[(location[0] + dir[0])%rows][(location[1] + dir[1])%columns] == BoardConstants::DAMAGED_WALL
     && tank.getShootingCooldown() == 0) {
         // destroy wall in order to move away
         return Action::Type::SHOOT;
@@ -143,10 +189,34 @@ Action::Type AlgorithmPlayerTwo::possibleDodgeMove(Tank &tank, Shell &shell) {
     for (TurnToAction t: longTurns) {
         // If needed, take a long turn, takes 2 game turns
         array<int,2> newDir = getDirection(dir, t.turn);
-        if (board[location[0] + newDir[0]][location[1] + newDir[1]] == BoardConstants::EMPTY_SPACE) {
+        if (board[(location[0] + newDir[0])%rows][(location[1] + newDir[1])%columns] == BoardConstants::EMPTY_SPACE) {
             return t.actionType;
         }
     }
     return Action::Type::NOP;
 }
 
+Action::Type AlgorithmPlayerTwo::followPath() {
+    vector<vector<char>> board = gameBoard->getBoard();
+    int rows = board.size();
+    int columns = board[0].size();
+    Moveable::Info info = tank->getInfo();
+
+    Point &start = pathToEnemy[0];
+    Point &next = pathToEnemy[1];
+    array<int,2> dir = directionBetweenPoints(start, next);
+    if (dir == info.dir) {
+        char tile = board[(info.location[0] + dir[0])%rows][(info.location[1] + dir[1])%columns];
+        if (tile == BoardConstants::WALL || tile == BoardConstants::DAMAGED_WALL)
+            return Action::Type::SHOOT;
+        if (std::find(tilesToAvoid.begin(), tilesToAvoid.end(), next) != tilesToAvoid.end()) {
+            pathToEnemy.erase(pathToEnemy.begin());
+            return Action::Type::MOVE_FORWARD;
+        }
+        return Action::Type::NOP;
+    } 
+    else {
+        Turn t = rotation(info.dir, dir);
+        return turnToAction(t);
+    }
+}

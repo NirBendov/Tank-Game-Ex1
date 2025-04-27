@@ -25,15 +25,16 @@ private:
     vector<Point> tilesToAvoid;
     Tank *tank;
 public:
-    AlgorithmPlayerTwo(int playerId, GameBoard* gameBoard, Tank *tank);
+    AlgorithmPlayerTwo(int playerId, GameBoard* gameBoard);
     ~AlgorithmPlayerTwo();
 
     vector<Action> decideNextActions() override;
     Action::Type possibleDodgeMove(Tank &tank, Shell &shell);
-    vector<Point> findBestPath();
     Action::Type followPath();
-    Action::Type panicRoutine();
+    Action panicRoutine();
+    Action regularRoutine();
     void addTileToAvoid();
-    void removeTileToAvoid(Point &p);
+    void removeTilesToAvoid();
     void defaultMode() override;
+    void update() override;
 };

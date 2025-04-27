@@ -801,6 +801,7 @@ void GameBoard::executeStep() {
             return;
         }
         std::cout << "Collisions handled" << (i == 0 ? "" : " again") << std::endl;
+        updateAlgorithmsAfterShells();
     }
     std::cout << "Collisions handled again" << std::endl;
     performActions();
@@ -808,6 +809,15 @@ void GameBoard::executeStep() {
     handleCollisions();
     std::cout << "Collisions handled third time" << std::endl;
     checkNoAmoForTanks();
+}
+
+void GameBoard::updateAlgorithmsAfterShells() {
+    for (auto& tank : player1Tanks) {
+        tank.getAlgorithm()->update();
+    }
+    for (auto& tank : player2Tanks) {
+        tank.getAlgorithm()->update();
+    }
 }
 
 vector<pair<int, int>> GameBoard::getPlayerTankPositions(int playerId) const {

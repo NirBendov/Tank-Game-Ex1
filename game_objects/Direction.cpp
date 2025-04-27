@@ -1,6 +1,7 @@
 #include "Direction.h"
 #include "../constants/BoardConstants.h"
 #include "../board/GameBoard.h"
+#include "./algorithms/Pathfinder.h"
 #include <cmath>
 #include <array>
 
@@ -61,4 +62,43 @@ bool isInBulletPath(array<int, 2> start, array<int, 2> trajectory, array<int, 2>
         }
     }
     return true;
+}
+
+array<int,2> directionBetweenPoints(Point &start, Point &end) {
+    int dy = end.x - start.x; //this is not a mistake
+    int dx = end.y - start.y;
+    if (dy > 1) 
+        dy = -1;
+    else if (dy < -1)
+        dy = 1;
+    if (dx > 1) 
+        dx = -1;
+    else if (dx < -1)
+        dx = 1; 
+    return {dy, dx};
+}
+
+Turn rotation(array<int,2> currDir, array<int,2> newDir) {
+    int rotation = inverseMap(newDir) - inverseMap(currDir);
+    return rotation > 4 ? Turn(rotation - 8) : Turn(rotation);
+}
+
+Action::Type turnToAction(Turn t) {
+    switch (t)
+    {
+    case Turn::RIGHT_90 :
+    case Turn::RIGHT_135 :
+    case Turn::COMPLETE_180 :
+        return Action::Type::TURN_R_90;
+    case Turn::RIGHT_45 :
+        return Action::Type::TURN_R_45;
+    case Turn::LEFT_90:
+    case Turn::LEFT_135:
+        return Action::Type::TURN_L_90;
+    case Turn::LEFT_45:
+        return Action::Type::TURN_L_45;
+    default:
+        return Action::Type::NOP;
+        break;
+    }
 }

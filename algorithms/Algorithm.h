@@ -20,4 +20,5 @@ public:
     virtual vector<Action> decideNextActions() = 0;
     Action moveBackwards(); 
     virtual void defaultMode();
+    virtual void update() = 0;
 };

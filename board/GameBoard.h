@@ -40,6 +40,7 @@ private:
     bool isShellAtPosition(int x, int y) const;
     bool checkGameOver(); // Check if game is over and set winner
     void checkNoAmoForTanks(); // Check if all tanks are out of ammo
+    void updateAlgorithmsAfterShells(); // If any algorithm needs to update some data about moving shells
 public:
     typedef struct {
         pair<int, int> position;
@@ -61,7 +62,7 @@ public:
     
     // Get tanks for a specific player
     const vector<Tank>& getPlayerTanks(int playerId) const {
-        return playerId == 1 ? player1Tanks : player2Tanks;
+        return playerId == Player::P1 ? player1Tanks : player2Tanks;
     }
 
     // Get positions of tanks for a specific player

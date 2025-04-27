@@ -112,7 +112,7 @@ int dist(Point p1, Point p2) {
     return max(abs(p1.x - p2.x), abs(p1.y - p2.y));
 }
 
-vector<Point> updatePath(vector<Point> &path, Point &newEnd) {
+vector<Point> updatePathEnd(vector<Point> &path, Point &newEnd) {
     Point end = path.back();
     path.pop_back();
     if (newEnd == end) {
@@ -139,6 +139,32 @@ vector<Point> updatePath(vector<Point> &path, Point &newEnd) {
     }
 }
 
+vector<Point> updatePathStart(vector<Point> &path, Point &newStart) {
+    Point start = path.front();
+    path.erase(path.begin());
+    if (newStart == start) {
+        path.insert(path.begin(), start);
+    }
+    else {
+        Point nearStart = path.front();
+        if (!(newStart == nearStart)) {
+            if (dist(start, newStart) >= dist(nearStart, newStart)) {
+                if (!path.empty()) {
+                    Point nearNearStart = path.front();
+                    if (dist(newStart, nearNearStart) > 1) {
+                        path.insert(path.begin(), nearStart);
+                    }
+                }
+            }
+            else {
+                path.insert(path.begin(), nearStart);
+                path.insert(path.begin(), start);
+            }
+        }
+        path.insert(path.begin(), newStart);
+    }
+}
+
 array<int,2> calcDirection(vector<Point> &path, int rows, int columns) {
     Point *start = &path[0];
     Point *next = &path[1];
@@ -161,7 +187,7 @@ array<int,2> calcDirection(vector<Point> &path, int rows, int columns) {
     else
         dy = next->y - start->y;
     
-    return {dx ,dy};
+    return {dy ,dx};
 }
 
 bool isPathStraight(vector<Point> &path, int rows, int columns) {
@@ -183,29 +209,39 @@ bool isPathStraight(vector<Point> &path, int rows, int columns) {
     return true;
 }
 
-int main() {
-    vector<vector<int>> grid = {
-        {0, 1, 0, 0, 0},
-        {0, 1, 0, 1, 0},
-        {0, 0, 0, 1, 0},
-        {1, 1, 0, 0, 0},
-        {0, 0, 0, 1, 0}
-    };
-
-    Point start = {0, 0};
-    Point end = {4, 4};
-
-    vector<Point> path = bfsPathfinder(grid, start, end, false);
-
-    if (!path.empty()) {
-        cout << "Path found:\n";
-        for (const auto& p : path) {
-            cout << "(" << p.x << ", " << p.y << ") ";
-        }
-        cout << endl;
-    } else {
-        cout << "No path found.\n";
+bool isPathClear(vector<Point> &path, const vector<vector<char>>& grid) {
+    for (Point &p: path) {
+        char tile = grid[p.y][p.x];
+        if (tile == BoardConstants::WALL ||
+                tile == BoardConstants::DAMAGED_WALL)
+                return false;
     }
-
-    return 0;
+    return true;
 }
+
+// int main() {
+//     vector<vector<int>> grid = {
+//         {0, 1, 0, 0, 0},
+//         {0, 1, 0, 1, 0},
+//         {0, 0, 0, 1, 0},
+//         {1, 1, 0, 0, 0},
+//         {0, 0, 0, 1, 0}
+//     };
+
+//     Point start = {0, 0};
+//     Point end = {4, 4};
+
+//     vector<Point> path = bfsPathfinder(grid, start, end, false);
+
+//     if (!path.empty()) {
+//         cout << "Path found:\n";
+//         for (const auto& p : path) {
+//             cout << "(" << p.x << ", " << p.y << ") ";
+//         }
+//         cout << endl;
+//     } else {
+//         cout << "No path found.\n";
+//     }
+
+//     return 0;
+// }

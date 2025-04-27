@@ -25,7 +25,7 @@ public:
     Shell* shoot();
 
     void assignAlgorithm(Algorithm *a);
-    const Algorithm* getAlgorithm() const;
+    Algorithm* getAlgorithm() const;
 
     void assignPlayerId(Player::PlayerId id);
     Player::PlayerId getPlayerId() const;
@@ -56,6 +56,7 @@ public:
     void decreaseShootingCooldown();
     int getShootingCooldown();
     int getAmmoCount() const { return ammoCount; }
+    void doNothing();
 };
 
 static constexpr int MAX_AMMO = 16;
