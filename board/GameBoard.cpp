@@ -8,6 +8,7 @@
 #include "../algorithms/Action.h"
 #include "../constants/BoardConstants.h"
 #include "../game_objects/Direction.h"
+#include "../algorithms/Algorithm.h"
 
 using namespace std;
 using namespace BoardConstants;
@@ -970,27 +971,6 @@ void GameBoard::printBoard() const {
         std::cout << std::endl;
     }
     std::cout << std::endl;
-}
-
-void GameBoard::checkNoAmoForTanks() {
-    bool tankHasAmmo = false;
-    for (auto& tank : player1Tanks) {
-        if (tank.getAmmoCount() == 0) {
-            tankHasAmmo = true;
-        }
-    }
-    for (auto& tank : player2Tanks) {
-        if (tank.getAmmoCount() == 0) {
-            tankHasAmmo = true;
-        }
-    }
-    if(!tankHasAmmo){
-        numOfTurnsSinceNoAmmo++;
-    }
-    if(numOfTurnsSinceNoAmmo >= BoardConstants::NO_AMMO_TURNS){
-        gameOver = true;
-        winner = 0; // 0 represents a tie
-    }
 }
 
 void GameBoard::checkNoAmoForTanks() {

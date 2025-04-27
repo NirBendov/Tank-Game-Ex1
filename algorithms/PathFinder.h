@@ -5,8 +5,8 @@
 #include <stack>
 #include <algorithm>
 #include <cmath>
-#include "./constants/BoardConstants.h"
-#include "./game_objects/Direction.h"
+#include "../constants/BoardConstants.h"
+#include "../game_objects/Direction.h"
 
 using namespace std;
 

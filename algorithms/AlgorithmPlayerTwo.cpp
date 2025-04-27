@@ -5,6 +5,8 @@
 #include "../game_objects/Direction.h"
 #include "./constants/BoardConstants.h"
 #include "./board/GameBoard.h"
+#include "../game_objects/Tank.h"
+#include "../game_objects/Shell.h"
 #include "PathFinder.h"
 #include "Direction.h"
 #include <array>

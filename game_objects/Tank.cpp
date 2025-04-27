@@ -1,6 +1,7 @@
 #include "Tank.h"
 #include "Direction.h"
-#include "./constants/BoardConstants.h"
+#include "../constants/BoardConstants.h"
+#include "../algorithms/Algorithm.h"
 
 Tank::Tank(int location[2], int dir[2])
   : Moveable(location, dir)
@@ -9,10 +10,6 @@ Tank::Tank(int location[2], int dir[2])
   , algo(nullptr)
   , playerId(Player::PlayerId(/* some default, e.g. Player::None */))
 {}
-
-Tank::~Tank() {
-    delete algo;
-}
 
 void Tank::turn(Turn t) {
     array<int, 2> newDir = getDirection(info.dir, t);

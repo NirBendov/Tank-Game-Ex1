@@ -1,12 +1,13 @@
 #pragma once
 #include <vector>
 #include <string>
-#include "../game_objects/Moveable.h"
-#include "../game_objects/Tank.h"
-#include "../game_objects/Shell.h"
-#include "../algorithms/Action.h"
 #include <map>
 #include "../constants/BoardConstants.h"
+#include "../player/Player.h"
+class Action;
+class Moveable;
+class Tank;
+class Shell;
 
 using namespace std;
 

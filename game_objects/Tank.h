@@ -2,10 +2,11 @@
 
 #include "Moveable.h"
 #include "Shell.h"
-#include "Direction.h"           
-#include "../algorithms/Algorithm.h"
+#include "Direction.h"      
 #include "../player/Player.h"
 #include "../constants/BoardConstants.h"
+
+class Algorithm;
 
 class Tank : public Moveable {
 private:

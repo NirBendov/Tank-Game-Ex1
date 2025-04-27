@@ -1,7 +1,7 @@
 #pragma once
 #include <array>
-#include "./algorithms/PathFinder.h"
-
+#include "../algorithms/PathFinder.h"
+#include "../algorithms/Action.h"
 class GameBoard;  // Forward declaration
 
 using namespace std;

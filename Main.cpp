@@ -8,12 +8,13 @@
 #include "algorithms/Algorithm.h"
 #include "algorithms/AlgorithmPlayerOne.h"
 #include "algorithms/AlgorithmPlayerTwo.h"
+#include "algorithms/Action.h"
 
 using namespace std;
 
 int main() {
     // Create game board from input
-    string inputFile = "game_board.txt"; // You should specify the actual input file
+    string inputFile = "test_board.txt"; // You should specify the actual input file
     vector<vector<char>> initialBoard = process(inputFile);
     GameBoard gameBoard(initialBoard);
 
@@ -24,7 +25,7 @@ int main() {
     player2.id = Player::PlayerId::P2;
 
     // Initialize algorithms with player IDs and game board
-    AlgorithmPlayerOne algo1(1, &gameBoard);
+    AlgorithmPlayerTwo algo1(1, &gameBoard);
     AlgorithmPlayerTwo algo2(2, &gameBoard);
 
     // Main game loop
