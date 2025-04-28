@@ -4,8 +4,8 @@
 #include <stack>
 #include <algorithm>
 #include <cmath>
-#include "./constants/BoardConstants.h"
-#include "./game_objects/Direction.h"
+#include "../constants/BoardConstants.h"
+#include "../game_objects/Direction.h"
 #include "PathFinder.h"
 
 using namespace std;
@@ -28,39 +28,6 @@ Point wrapPoint(int x, int y, int rows, int cols) {
     x = (x + rows) % rows;
     y = (y + cols) % cols;
     return {x, y};
-}
-
-vector<Point> directPathFinder(Point start, Point end, int rows, int columns) {
-    int yDir = start.y == end.y ? 0 : 1;
-    int dy = abs(start.y - end.y);
-    yDir = start.y > end.y ? -1 * yDir : yDir;
-    int verticalDist = min(dy, rows - dy);
-    yDir = verticalDist == rows - dy ? -1 * yDir : yDir;
-
-    int xDir = start.x == end.x ? 0 : 1;
-    int dx = abs(start.x - end.x);
-    xDir = start.x > end.x ? -1 * xDir : xDir;
-    int horizontalDist = min(dx, columns- dx);
-    xDir = horizontalDist == columns - dx ? -1 * xDir : xDir;
-
-    int dist = min(horizontalDist, verticalDist);
-    int maxDist = max(horizontalDist, verticalDist);
-
-    vector<Point> path;
-    for (int i = 0; i <= dist; ++i) {
-        Point p = wrapPoint(start.x + xDir*i, start.y + yDir*i, rows, columns);
-        path.push_back(p);
-    }
-    for (int i = dist+1; i <= maxDist; ++i) {
-        Point p;
-        if (horizontalDist > verticalDist)
-            p = wrapPoint(start.x + xDir*i, end.y, rows, columns);
-        else 
-            p = wrapPoint(end.x, start.y + yDir*i, rows, columns);
-        path.push_back(p);
-    }
-
-    return path;
 }
 
 vector<Point> bfsPathfinder(const vector<vector<char>>& grid, Point start, Point end, bool includeWalls) {
@@ -108,24 +75,26 @@ vector<Point> bfsPathfinder(const vector<vector<char>>& grid, Point start, Point
     return bfsPathfinder(grid, start, end, true);
 }
 
-int dist(Point p1, Point p2) {
-    return max(abs(p1.x - p2.x), abs(p1.y - p2.y));
+int dist(Point p1, Point p2, int rows, int cols) {
+    int dx = min(abs(p1.x - p2.x), rows - abs(p1.x - p2.x));
+    int dy = min(abs(p1.y - p2.y), cols - abs(p1.y - p2.y));
+    return max(dx ,dy);
 }
 
-vector<Point> updatePathEnd(vector<Point> &path, Point &newEnd) {
+void updatePathEnd(vector<Point> &path, Point &newEnd, int rows, int cols) {
     Point end = path.back();
     path.pop_back();
     if (newEnd == end) {
         path.push_back(newEnd);
     }
-    else {
+    else if (path.size() > 1){
         Point nearEnd = path.back();
         path.pop_back();
         if (!(newEnd == nearEnd)) {
-            if (dist(end, newEnd) >= dist(nearEnd, newEnd)) {
+            if (dist(end, newEnd, rows, cols) >= dist(nearEnd, newEnd, rows, cols)) {
                 if (!path.empty()) {
                     Point nearNearEnd = path.back();
-                    if (dist(newEnd, nearNearEnd) > 1) {
+                    if (dist(newEnd, nearNearEnd, rows, cols) > 1) {
                         path.push_back(nearEnd);
                     }
                 }
@@ -136,22 +105,27 @@ vector<Point> updatePathEnd(vector<Point> &path, Point &newEnd) {
             }
         }
         path.push_back(newEnd);
+    } else {
+        if(dist(newEnd, path.front(), rows, cols) > 1)
+            path.push_back(end);
+        path.push_back(newEnd);
     }
 }
 
-vector<Point> updatePathStart(vector<Point> &path, Point &newStart) {
+void updatePathStart(vector<Point> &path, Point &newStart, int rows, int cols) {
     Point start = path.front();
     path.erase(path.begin());
     if (newStart == start) {
         path.insert(path.begin(), start);
     }
-    else {
+    else if (path.size() > 1) {
         Point nearStart = path.front();
+        path.erase(path.begin());
         if (!(newStart == nearStart)) {
-            if (dist(start, newStart) >= dist(nearStart, newStart)) {
+            if (dist(start, newStart, rows, cols) >= dist(nearStart, newStart, rows, cols)) {
                 if (!path.empty()) {
                     Point nearNearStart = path.front();
-                    if (dist(newStart, nearNearStart) > 1) {
+                    if (dist(newStart, nearNearStart, rows, cols) > 1) {
                         path.insert(path.begin(), nearStart);
                     }
                 }
@@ -162,6 +136,10 @@ vector<Point> updatePathStart(vector<Point> &path, Point &newStart) {
             }
         }
         path.insert(path.begin(), newStart);
+    } else {
+        if(dist(newStart, path.back(), rows, cols) > 1)
+            path.insert(path.begin(), start);
+        path.insert(path.begin(), newStart);
     }
 }
 
@@ -170,22 +148,22 @@ array<int,2> calcDirection(vector<Point> &path, int rows, int columns) {
     Point *next = &path[1];
     int dx, dy;
     if (start->x == next->x)
-        dx = 0;
-    else if (start->x == 0 and next->x == columns - 1) 
-        dx = -1;
-    else if (start->x == columns - 1 and next->x == 0)
-        dx = 1;
-    else
-        dx = next->x - start->x;
-
-    if (start->y == next->y)
         dy = 0;
-    else if (start->y == 0 and next->y == rows - 1) 
+    else if (start->x == 0 and next->x == columns - 1) 
         dy = -1;
-    else if (start->y == rows - 1 and next->y == 0)
+    else if (start->x == columns - 1 and next->x == 0)
         dy = 1;
     else
-        dy = next->y - start->y;
+        dy = next->x - start->x;
+
+    if (start->y == next->y)
+        dx = 0;
+    else if (start->y == 0 and next->y == rows - 1) 
+        dx = -1;
+    else if (start->y == rows - 1 and next->y == 0)
+        dx = 1;
+    else
+        dx = next->y - start->y;
     
     return {dy ,dx};
 }
@@ -218,30 +196,3 @@ bool isPathClear(vector<Point> &path, const vector<vector<char>>& grid) {
     }
     return true;
 }
-
-// int main() {
-//     vector<vector<int>> grid = {
-//         {0, 1, 0, 0, 0},
-//         {0, 1, 0, 1, 0},
-//         {0, 0, 0, 1, 0},
-//         {1, 1, 0, 0, 0},
-//         {0, 0, 0, 1, 0}
-//     };
-
-//     Point start = {0, 0};
-//     Point end = {4, 4};
-
-//     vector<Point> path = bfsPathfinder(grid, start, end, false);
-
-//     if (!path.empty()) {
-//         cout << "Path found:\n";
-//         for (const auto& p : path) {
-//             cout << "(" << p.x << ", " << p.y << ") ";
-//         }
-//         cout << endl;
-//     } else {
-//         cout << "No path found.\n";
-//     }
-
-//     return 0;
-// }

@@ -3,6 +3,7 @@
 #include "../algorithms/PathFinder.h"
 #include "../algorithms/Action.h"
 class GameBoard;  // Forward declaration
+struct Point;
 
 using namespace std;
 

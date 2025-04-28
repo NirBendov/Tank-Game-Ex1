@@ -59,7 +59,12 @@ Action AlgorithmPlayerTwo::panicRoutine() {
 Action AlgorithmPlayerTwo::regularRoutine() {
     pair<int, int> enemyPosition = gameBoard->getEnemyTankPositions(playerId)[0];
     Point enemy = {enemyPosition.first, enemyPosition.second};
-    updatePathEnd(pathToEnemy, enemy);
+
+    vector<vector<char>> board = gameBoard->getBoard();
+    int rows = board.size();
+    int columns = board[0].size();
+
+    updatePathEnd(pathToEnemy, enemy, rows, columns);
     
     // If we're in the middle of a backward move
     if (isMovingBackward) {
@@ -167,7 +172,7 @@ Action::Type AlgorithmPlayerTwo::possibleDodgeMove(Tank &tank, Shell &shell) {
     && (board[(location[0] + dir[0])%rows][(location[1] + dir[1])%columns] == BoardConstants::EMPTY_SPACE)
     && std::find(tilesToAvoid.begin(), tilesToAvoid.end(), p) == tilesToAvoid.end()) {
         // Move out of the shell's path if possible
-        updatePathStart(pathToEnemy, p);
+        updatePathStart(pathToEnemy, p, rows, columns);
         return Action::Type::MOVE_FORWARD;
     }
     for (TurnToAction t: lightTurns) {
