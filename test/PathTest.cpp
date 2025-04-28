@@ -152,6 +152,32 @@ void isPathStraightTest() {
     cout << "isPathStraight test completed" << endl;
 }
 
+void bfsPathFinderTest() {
+    char e = BoardConstants::EMPTY_SPACE;
+    vector<vector<char>> grid = {
+        {e, e, e, e},
+        {e, e, e, e},
+        {e, e, e, e}
+    };
+    Point start = {1, 1};
+    Point end = {2, 2};
+
+    vector<Point> path = bfsPathfinder(grid, start, end, false);
+
+    assert(!path.empty());
+    assert(path.front() == start);
+    assert(path.back() == end);
+    assert(path.size() == 2);
+
+    char w = BoardConstants::MINE;
+    grid[0][0] = w; grid[0][1] = w; grid[0][2] = w;
+    grid[1][0] = w;                 grid[1][2] = w;
+    grid[2][0] = w; grid[2][1] = w; grid[2][2] = w;
+
+    vector<Point> p2 = bfsPathfinder(grid, {1,1}, {2,3}, false);
+    assert(p2.empty());
+}
+
 int main() {
     wrapPointTest();
     distTest();
@@ -159,5 +185,6 @@ int main() {
     updatePathStartTest();
     calcDirectionTest();
     isPathStraightTest();
+    bfsPathFinderTest();
     return 0;
 }
