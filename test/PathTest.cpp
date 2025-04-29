@@ -159,7 +159,7 @@ void bfsPathFinderTest() {
         {e, e, e, e},
         {e, e, e, e}
     };
-    Point start = {1, 1};
+    Point start = {0, 0};
     Point end = {2, 2};
 
     vector<Point> path = bfsPathfinder(grid, start, end, false);
@@ -167,15 +167,43 @@ void bfsPathFinderTest() {
     assert(!path.empty());
     assert(path.front() == start);
     assert(path.back() == end);
-    assert(path.size() == 2);
+    assert(path.size() == 3);
 
-    char w = BoardConstants::MINE;
-    grid[0][0] = w; grid[0][1] = w; grid[0][2] = w;
-    grid[1][0] = w;                 grid[1][2] = w;
-    grid[2][0] = w; grid[2][1] = w; grid[2][2] = w;
+    char m = BoardConstants::MINE;
+    grid[0][0] = m; grid[0][1] = m; grid[0][2] = m;
+    grid[1][0] = m;                 grid[1][2] = m;
+    grid[2][0] = m; grid[2][1] = m; grid[2][2] = m;
 
     vector<Point> p2 = bfsPathfinder(grid, {1,1}, {2,3}, false);
     assert(p2.empty());
+
+    char w = BoardConstants::WALL;
+    vector<vector<char>> grid2 = {
+        {e, e, e, e, e, e, e, e},
+        {e, e, w, w, e, e, e, e},
+        {e, e, w, e, e, e, e, e},
+        {e, e, w, w, e, e, e, e},
+        {e, e, e, e, e, e, e, e}
+    };
+
+    Point s = {2,1};
+    Point t = {2,3};
+
+    // finds best path that doesnt go through walls
+    vector<Point> p3 = bfsPathfinder(grid2, s, t, false);
+    assert(!p3.empty());
+    assert(p3.front() == s);
+    assert(p3.back() == t);
+    assert(p3.size() == 6);
+
+    // finds best path that may go through walls
+    vector<Point> p4 = bfsPathfinder(grid2, s, t, true);
+    assert(!p4.empty());
+    assert(p4.front() == s);
+    assert(p4.back() == t);
+    assert(p4.size() == 3);
+
+    cout << "bfsPathFinder test completed" << endl;
 }
 
 int main() {

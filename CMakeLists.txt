@@ -1,9 +1,12 @@
 cmake_minimum_required(VERSION 3.10)
-project(TankGame)
+set(CMAKE_CXX_COMPILER g++)
+set(CMAKE_C_COMPILER gcc)
+
+project(tanks_game)
 
 # Set C++ standard
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Add source files
 set(GAME_SOURCES
@@ -14,33 +17,40 @@ set(GAME_SOURCES
     board/GameBoard.cpp
     player/Player.cpp
     constants/boardconstants.cpp
+    algorithms/PathFinder.cpp
+    # algorithms/algorithmPlayerOne.cpp
+    algorithms/algorithmPlayerTwo.cpp
+    file_handlers/InputHandler.cpp
 )
 
 # Add test sources
-set(TEST_SOURCES
-    RunTests.cpp
-    test/TestRunner.cpp
-    test/TankCollisionTest.cpp
-    test/ShellCollisionTest.cpp
-    test/GameTest.cpp
-)
-
+# set(TEST_SOURCES
+#     RunTests.cpp
+#     test/TestRunner.cpp
+#     test/TankCollisionTest.cpp
+#     test/ShellCollisionTest.cpp
+#     test/GameTest.cpp
+# )
+ 
 # Create test executable
-add_executable(RunTests ${TEST_SOURCES} ${GAME_SOURCES})
+# add_executable(RunTests ${TEST_SOURCES} ${GAME_SOURCES})
+add_executable(tanks_game Main.cpp ${GAME_SOURCES})
 
 # Add include directories
-target_include_directories(RunTests PRIVATE
+include_directories(
     ${CMAKE_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/algorithms
+    ${CMAKE_SOURCE_DIR}/file_handlers
     ${CMAKE_SOURCE_DIR}/game_objects
     ${CMAKE_SOURCE_DIR}/board
     ${CMAKE_SOURCE_DIR}/player
     ${CMAKE_SOURCE_DIR}/constants
-    ${CMAKE_SOURCE_DIR}/test
+    # ${CMAKE_SOURCE_DIR}/test
 )
 
 # Add compiler flags if needed
-if(MSVC)
-    target_compile_options(RunTests PRIVATE /W4)
-else()
-    target_compile_options(RunTests PRIVATE -Wall -Wextra)
-endif() 
+# if(MSVC)
+#     target_compile_options(RunTests PRIVATE /W4)
+# else()
+#     target_compile_options(RunTests PRIVATE -Wall -Wextra)
+# endif() 

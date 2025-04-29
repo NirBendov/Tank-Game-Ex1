@@ -39,8 +39,8 @@ std::vector<std::vector<char>> process(const std::string& fileName) {
     }
 
     std::array<int, 2> d = dims(s);
-    BOARD_HEIGHT = d[0];
-    BOARD_WIDTH = d[1];
+    const int BOARD_HEIGHT = d[0];
+    const int BOARD_WIDTH = d[1];
     std::cout << "Board dimensions: " << BOARD_HEIGHT << "x" << BOARD_WIDTH << std::endl;
     
     std::vector<std::vector<char>> board;

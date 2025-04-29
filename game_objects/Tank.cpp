@@ -11,6 +11,8 @@ Tank::Tank(int location[2], int dir[2])
   , playerId(Player::PlayerId(/* some default, e.g. Player::None */))
 {}
 
+Tank::~Tank() {}
+
 void Tank::turn(Turn t) {
     array<int, 2> newDir = getDirection(info.dir, t);
     info.dir[0] = newDir[0];

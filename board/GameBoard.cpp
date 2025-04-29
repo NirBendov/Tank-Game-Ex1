@@ -9,6 +9,7 @@
 #include "../constants/BoardConstants.h"
 #include "../game_objects/Direction.h"
 #include "../algorithms/Algorithm.h"
+#include "../player/Player.h"
 
 using namespace std;
 using namespace BoardConstants;

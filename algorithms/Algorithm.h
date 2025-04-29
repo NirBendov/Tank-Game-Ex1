@@ -14,11 +14,11 @@ protected:
     std::pair<int, int> lastBackwardMoveTarget;
 
 public:
-    Algorithm(int playerId, GameBoard* gameBoard);
+    Algorithm(int playerId, GameBoard* gameBoard): playerId(playerId), gameBoard(gameBoard) {}
     virtual ~Algorithm() = default;
     virtual std::vector<Action> decideNextActions() = 0;
-    Action moveBackwards(); 
-    virtual void defaultMode();
+    // Action moveBackwards(); 
+    virtual void defaultMode() = 0;
     virtual void update() = 0;
 };
 

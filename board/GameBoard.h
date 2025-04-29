@@ -2,8 +2,14 @@
 #include <vector>
 #include <string>
 #include <map>
-#include "../constants/BoardConstants.h"
 #include "../player/Player.h"
+#include "../game_objects/Tank.h"
+#include "../game_objects/Shell.h"
+#include "../algorithms/Action.h"
+#include "../constants/BoardConstants.h"
+#include "../game_objects/Direction.h"
+#include "../algorithms/Algorithm.h"
+
 class Action;
 class Moveable;
 class Tank;

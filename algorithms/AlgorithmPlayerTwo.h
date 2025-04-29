@@ -1,8 +1,12 @@
 #pragma once
 #include "Action.h"
 #include "Algorithm.h"
+#include "../game_objects/Moveable.h"
 #include "../game_objects/Direction.h"
-#include "./constants/BoardConstants.h"
+#include "../game_objects/Tank.h"
+#include "../game_objects/Shell.h"
+#include "../constants/BoardConstants.h"
+#include "../board/GameBoard.h"
 #include "PathFinder.h"
 using namespace std;
 
@@ -26,7 +30,7 @@ private:
     Tank *tank;
 public:
     AlgorithmPlayerTwo(int playerId, GameBoard* gameBoard);
-    ~AlgorithmPlayerTwo();
+    ~AlgorithmPlayerTwo() override;
 
     vector<Action> decideNextActions() override;
     Action::Type possibleDodgeMove(Tank &tank, Shell &shell);
