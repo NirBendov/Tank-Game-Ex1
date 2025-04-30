@@ -12,7 +12,7 @@ Player::~Player()
 }
 
 void Player::AssignPlayerIdToTanks() {
-    for (int i = 0; i < tanks.size(); ++i) {
+    for (size_t i = 0; i < tanks.size(); ++i) {
         tanks[i]->assignPlayerId(id);
     }
 }

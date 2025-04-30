@@ -59,7 +59,7 @@ public:
     GameBoard(const vector<vector<char>>& initialBoard);
     ~GameBoard();
     
-    bool validateMove(const Action& action, int playerId) const;
+    bool validateMove(const Action& action, int playerId);
     void addToStepMoves(const Action& action, int playerId);
     void executeStep();
     void saveGameMoves(const string& filename) const;
@@ -67,7 +67,7 @@ public:
     int getWinner() const { return winner; } // Get the winner (0 for tie, 1 for player 1, 2 for player 2)
     
     // Get tanks for a specific player
-    const vector<Tank>& getPlayerTanks(int playerId) const {
+    vector<Tank>& getPlayerTanks(int playerId) {
         return playerId == 1 ? player1Tanks : player2Tanks;
     }
 

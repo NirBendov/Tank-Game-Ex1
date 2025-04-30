@@ -31,3 +31,4 @@ void updatePathStart(vector<Point> &path, Point &newStart, int rows, int cols);
 bool isPathStraight(vector<Point> &path, int rows, int columns);
 bool isPathClear(vector<Point> &path, const vector<vector<char>>& grid);
 array<int,2> calcDirection(vector<Point> &path, int rows, int columns);
+void printPath(const vector<Point>& path);

@@ -10,10 +10,10 @@ class Algorithm;
 class Tank : public Moveable {
 private:
     int ammoCount;
+    int shootingCooldown;
     Algorithm *algo;
     int playerId;
-    int moveBackwardCooldown;
-    int shootingCooldown;
+    int moveBackwardCooldown = 0;
     bool isMovingBackward = false;
     bool finishedMoveBackward = false;
     bool isTankAlive = true;

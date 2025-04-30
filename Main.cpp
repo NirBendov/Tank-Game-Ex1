@@ -9,6 +9,7 @@
 #include "algorithms/AlgorithmPlayerOne.h"
 #include "algorithms/AlgorithmPlayerTwo.h"
 #include "algorithms/Action.h"
+#include "player/Player.h"
 
 using namespace std;
 namespace fs = std::filesystem;

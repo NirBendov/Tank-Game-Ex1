@@ -189,7 +189,7 @@ bool isPathStraight(vector<Point> &path, int rows, int columns) {
     }
     array<int,2> dir = calcDirection(path, rows, columns);
 
-    for (int i = 1; i < path.size() - 1; ++i) {
+    for (size_t i = 1; i < path.size() - 1; ++i) {
         Point *start = &path[i];
         Point *next = &path[i+1];
         if (!((next->x - start->x)%columns == dir[0]%columns)) {
@@ -210,4 +210,11 @@ bool isPathClear(vector<Point> &path, const vector<vector<char>>& grid) {
                 return false;
     }
     return true;
+}
+
+void printPath(const vector<Point>& path) {
+    for (const auto& p : path) {
+        cout << "(" << p.x << "," << p.y << ") ";
+    }
+    cout << endl;
 }

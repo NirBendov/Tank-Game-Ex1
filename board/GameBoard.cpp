@@ -65,13 +65,13 @@ GameBoard::GameBoard(const vector<vector<char>>& initialBoard)
 GameBoard::~GameBoard() {
 }
 
-bool GameBoard::validateMove(const Action& action, int playerId) const {
+bool GameBoard::validateMove(const Action& action, int playerId) {
     // Get the tank that's trying to move
     const Tank& targetTank = action.target();
     const auto& tankLocation = targetTank.getInfo().location;
     
     // Check if the tank belongs to the player
-    const auto& playerTanks = getPlayerTanks(playerId);
+    auto& playerTanks = getPlayerTanks(playerId);
     bool isPlayerTank = false;
     
     for (const auto& tank : playerTanks) {
@@ -855,8 +855,8 @@ void GameBoard::executeStep() {
                 return;
             }
             std::cout << "Collisions handled" << (i == 0 ? "" : " again") << std::endl;
-            updateAlgorithmsAfterShells();
         }
+        updateAlgorithmsAfterShells();
         std::cout << "Collisions handled again" << std::endl;
     } else {
         std::cout << "No shells to move" << std::endl;
@@ -870,10 +870,10 @@ void GameBoard::executeStep() {
 }
 
 void GameBoard::updateAlgorithmsAfterShells() {
-    for (auto& tank : player1Tanks) {
+    for (Tank& tank : player1Tanks) {
         tank.getAlgorithm()->update();
     }
-    for (auto& tank : player2Tanks) {
+    for (Tank& tank : player2Tanks) {
         tank.getAlgorithm()->update();
     }
 }

@@ -17,7 +17,7 @@ endif()
 # ——————————————————————————————————————————————
 # 2. Build Options
 # ——————————————————————————————————————————————
-option(BUILD_TESTING "Enable unit tests" ON)
+option(BUILD_TESTING "Enable unit tests" OFF)
 
 # ——————————————————————————————————————————————
 # 3. Source Files & Includes
@@ -69,10 +69,12 @@ if(BUILD_TESTING)
   FetchContent_MakeAvailable(googletest)
 
   set(TEST_SOURCES
-      test/RunTests.cpp
+      RunTests.cpp
       test/TestRunner.cpp
       test/TankCollisionTest.cpp
       test/ShellCollisionTest.cpp
+      test/WallInteractionTest.cpp
+      test/MineInteractionTest.cpp
       test/GameTest.cpp
   )
 

@@ -16,7 +16,7 @@ using namespace std;
 AlgorithmPlayerTwo::AlgorithmPlayerTwo(int playerId, GameBoard *gameBoard)
     : Algorithm(playerId, gameBoard), mode(OperationMode::CHASE) {
     cout << "Initializing AlgorithmPlayerTwo for player " << playerId << endl;
-    tank = new Tank(gameBoard->getPlayerTanks(playerId)[0]);
+    tank = &gameBoard->getPlayerTanks(playerId)[0];
     tank->assignAlgorithm(this);
 
     array<int,2> tankLocation = tank->getInfo().location;
@@ -49,7 +49,8 @@ vector<Action> AlgorithmPlayerTwo::decideNextActions() {
     }
     else {
         cout << "In regular mode" << endl;
-        actions.push_back(regularRoutine());
+        Action a = regularRoutine();
+        actions.push_back(a);
     }
     return actions;
 } 
@@ -119,9 +120,9 @@ Action AlgorithmPlayerTwo::regularRoutine() {
             cout << "Path is straight" << endl;
             array<int,2> pathDir = calcDirection(pathToEnemy, rows, columns);
             array<int,2> dir = tank->getInfo().dir;
-            if (isPathClear(pathToEnemy, board)) {
+            // if (isPathClear(pathToEnemy, board)) {
                 cout << "Path is clear" << endl;
-                if (pathDir == dir) {
+                if (pathDir[0] == dir[0] && pathDir[1] == dir[1]) {
                     cout << "Tank facing enemy, shooting" << endl;
                     mode = OperationMode::HUNT;
                     return {Action::Type::SHOOT, *tank};
@@ -129,9 +130,10 @@ Action AlgorithmPlayerTwo::regularRoutine() {
                 else {
                     cout << "Turning to face enemy" << endl;
                     Turn t = rotation(dir, pathDir);
+                    cout << "Turn taken:" << t << endl;
                     return {turnToAction(t), *tank};
                 }
-            }
+            // }
         }
         cout << "Following path" << endl;
         return {followPath(), *tank};
@@ -152,6 +154,8 @@ void AlgorithmPlayerTwo::removeTilesToAvoid() {
     vector<Point>::iterator it = tilesToAvoid.begin();
     while(it != tilesToAvoid.end()) {
         Point p = *it;
+        cout << "points to avoid player" << playerId << endl;
+        cout << p.x << ", " << p.y << endl;
         if (gameBoard->getBoard()[p.x][p.y] == BoardConstants::SHELL)
             tilesToAvoid.erase(find(tilesToAvoid.begin(), tilesToAvoid.end(), p));
         else
