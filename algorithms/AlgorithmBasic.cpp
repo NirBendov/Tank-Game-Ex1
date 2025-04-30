@@ -36,23 +36,6 @@ bool AlgorithmBasic::isInDanger(const Tank& tank) const {
         }
     }
     
-    // Check for mines in adjacent cells
-    const auto& location = tankInfo.location;
-    for (const auto& dir : directions) {
-        int newX = (location[0] + dir[0] + BOARD_HEIGHT) % BOARD_HEIGHT;
-        int newY = (location[1] + dir[1] + BOARD_WIDTH) % BOARD_WIDTH;
-        
-        // Check for mines
-        if (board[newX][newY] == MINE) {
-            return true;
-        }
-        
-        // Check for shells that will hit this position in the next turn
-        if (willShellHitPosition(newX, newY, 1)) {
-            return true;
-        }
-    }
-    
     return false;
 }
 
@@ -87,27 +70,6 @@ bool AlgorithmBasic::canShootFromPosition(const Tank& tank, int x, int y) const 
             if (isInBulletPath(startPos, dir, endPos, gameBoard)) {
                 return true;
             }
-        }
-    }
-    return false;
-}
-
-bool AlgorithmBasic::willShellHitPosition(int x, int y, int turnsAhead) const {
-    const auto& shells = gameBoard->getBullets();
-    
-    for (const auto& shell : shells) {
-        const auto& shellInfo = shell.getInfo();
-        // Calculate where the shell will be in 'turnsAhead' turns
-        // Shells move twice as fast as tanks
-        int shellX = shellInfo.location[0] + shellInfo.dir[0] * turnsAhead * 2;
-        int shellY = shellInfo.location[1] + shellInfo.dir[1] * turnsAhead * 2;
-        
-        // Handle wrap-around
-        shellX = (shellX + BOARD_HEIGHT) % BOARD_HEIGHT;
-        shellY = (shellY + BOARD_WIDTH) % BOARD_WIDTH;
-        
-        if (shellX == x && shellY == y) {
-            return true;
         }
     }
     return false;
@@ -172,109 +134,53 @@ Action::Type AlgorithmBasic::findSafeMove(const Tank& tank) const {
     const auto& board = gameBoard->getBoard();
     const auto& shells = gameBoard->getBullets();
     
-    // First check if we need to turn to avoid danger
+    // Check if we're in any bullet's path
     for (const auto& shell : shells) {
         const auto& shellInfo = shell.getInfo();
         if (isInBulletPath(shellInfo.location, shellInfo.dir, tankInfo.location, gameBoard)) {
-            // Try to turn perpendicular to the shell's direction
-            array<int, 2> shellDir = shellInfo.dir;
-            array<int, 2> currentDir = tankInfo.dir;
-            
-            // Calculate perpendicular direction
-            array<int, 2> perpDir = {-shellDir[1], shellDir[0]};
-            
-            // Check if we can turn to face perpendicular direction
-            if (currentDir[0] != perpDir[0] || currentDir[1] != perpDir[1]) {
-                // Calculate turn needed
-                int dotProduct = currentDir[0] * perpDir[0] + currentDir[1] * perpDir[1];
-                int crossProduct = currentDir[0] * perpDir[1] - currentDir[1] * perpDir[0];
+            // First try to move forward
+            array<int, 2> nextPos = tank.potentialMove();
+            if (board[nextPos[0]][nextPos[1]] != WALL && 
+                board[nextPos[0]][nextPos[1]] != DAMAGED_WALL && 
+                board[nextPos[0]][nextPos[1]] != MINE) {
+                return Action::Type::MOVE_FORWARD;
+            }
+
+            // If can't move forward, try the four possible turns
+            const array<Action::Type, 4> possibleTurns = {
+                Action::Type::TURN_R_90,
+                Action::Type::TURN_R_45,
+                Action::Type::TURN_L_90,
+                Action::Type::TURN_L_45
+            };
+
+            for (const auto& turnAction : possibleTurns) {
+                // Create a temporary tank to test the move
+                Tank tempTank = tank;
+                tempTank.assignAlgorithm(nullptr);
                 
-                if (crossProduct > 0) {
-                    return Action::Type::TURN_R_45; // Try 45 degree turn first
-                } else {
-                    return Action::Type::TURN_L_45; // Try 45 degree turn first
+                // Apply the turn
+                if (turnAction == Action::Type::TURN_R_90) {
+                    tempTank.turn(Turn::RIGHT_90);
+                } else if (turnAction == Action::Type::TURN_R_45) {
+                    tempTank.turn(Turn::RIGHT_45);
+                } else if (turnAction == Action::Type::TURN_L_90) {
+                    tempTank.turn(Turn::LEFT_90);
+                } else if (turnAction == Action::Type::TURN_L_45) {
+                    tempTank.turn(Turn::LEFT_45);
+                }
+
+                // Check if we can move in this new direction
+                nextPos = tempTank.potentialMove();
+                if (board[nextPos[0]][nextPos[1]] != WALL && 
+                    board[nextPos[0]][nextPos[1]] != DAMAGED_WALL && 
+                    board[nextPos[0]][nextPos[1]] != MINE) {
+                    return turnAction;
                 }
             }
         }
     }
     
-    // Check if there's a wall in front of us using potentialMove
-    array<int, 2> nextPos = tank.potentialMove();
-    int newX = nextPos[0];
-    int newY = nextPos[1];
-    
-    if (board[newX][newY] == WALL || board[newX][newY] == DAMAGED_WALL) {
-        // Try to find a direction without a wall
-        bool hasValidMove = false;
-        for (const auto& turn : {Action::Type::TURN_R_45, Action::Type::TURN_L_45, 
-                                Action::Type::TURN_R_90, Action::Type::TURN_L_90}) {
-            // Create a temporary tank to test potential moves
-            Tank tempTank = tank;
-            tempTank.assignAlgorithm(nullptr); // Clear the algorithm pointer for safety
-            
-            if (turn == Action::Type::TURN_R_45) {
-                tempTank.turn(Turn::RIGHT_45);
-            } else if (turn == Action::Type::TURN_L_45) {
-                tempTank.turn(Turn::LEFT_45);
-            } else if (turn == Action::Type::TURN_R_90) {
-                tempTank.turn(Turn::RIGHT_90);
-            } else {
-                tempTank.turn(Turn::LEFT_90);
-            }
-            
-            // Check the potential move in the new direction
-            nextPos = tempTank.potentialMove();
-            newX = nextPos[0];
-            newY = nextPos[1];
-            
-            if (board[newX][newY] != WALL && board[newX][newY] != DAMAGED_WALL && 
-                board[newX][newY] != MINE && isPositionSafeFromShells(newX, newY)) {
-                hasValidMove = true;
-                return turn;
-            }
-        }
-        
-        // If no valid moves found (completely surrounded by walls), try to shoot
-        if (!hasValidMove && tank.getShootingCooldown() == 0) {
-            return Action::Type::SHOOT;
-        }
-        
-        return Action::Type::NOP;
-    }
-    
-    // If no wall ahead and position is safe, move forward
-    if (board[newX][newY] != MINE && isPositionSafeFromShells(newX, newY)) {
-        return Action::Type::MOVE_FORWARD;
-    }
-    
-    // If forward is not safe, try turning
-    for (const auto& turn : {Action::Type::TURN_R_45, Action::Type::TURN_L_45, 
-                            Action::Type::TURN_R_90, Action::Type::TURN_L_90}) {
-        // Create a temporary tank to test potential moves
-        Tank tempTank = tank;
-        tempTank.assignAlgorithm(nullptr); // Clear the algorithm pointer for safety
-        
-        if (turn == Action::Type::TURN_R_45) {
-            tempTank.turn(Turn::RIGHT_45);
-        } else if (turn == Action::Type::TURN_L_45) {
-            tempTank.turn(Turn::LEFT_45);
-        } else if (turn == Action::Type::TURN_R_90) {
-            tempTank.turn(Turn::RIGHT_90);
-        } else {
-            tempTank.turn(Turn::LEFT_90);
-        }
-        
-        // Check the potential move in the new direction
-        nextPos = tempTank.potentialMove();
-        newX = nextPos[0];
-        newY = nextPos[1];
-        
-        if (board[newX][newY] != MINE && isPositionSafeFromShells(newX, newY)) {
-            return turn;
-        }
-    }
-    
-    // If no safe moves found, stay in place
     return Action::Type::NOP;
 }
 
@@ -282,106 +188,42 @@ Action::Type AlgorithmBasic::findShootingPosition(const Tank& tank) const {
     const auto& tankInfo = tank.getInfo();
     const auto& board = gameBoard->getBoard();
     const auto& enemyTanks = gameBoard->getEnemyTankPositions(playerId);
+    auto& enemyTank = enemyTanks[0];
     
-    // First check if we can shoot an enemy from current position
-    if (canShootEnemy(tank)) {
-        return Action::Type::SHOOT;
+    if (isInBulletPath(tankInfo.location, tankInfo.dir, {enemyTank.first, enemyTank.second}, gameBoard)) {
+        return Action::Type::NOP;
     }
     
-    // Find closest enemy tank
-    int closestDist = INT_MAX;
-    array<int, 2> closestEnemy = {-1, -1};
-    
-    for (const auto& enemyPos : enemyTanks) {
-        int dx = (enemyPos.first - tankInfo.location[0] + BOARD_HEIGHT) % BOARD_HEIGHT;
-        int dy = (enemyPos.second - tankInfo.location[1] + BOARD_WIDTH) % BOARD_WIDTH;
-        int dist = dx * dx + dy * dy;
-        
-        if (dist < closestDist) {
-            closestDist = dist;
-            closestEnemy = {enemyPos.first, enemyPos.second};
-        }
-    }
-    
-    if (closestEnemy[0] == -1) {
-        return Action::Type::NOP; // No enemies found
-    }
-    
-    // Calculate direction to enemy
-    int dx = (closestEnemy[0] - tankInfo.location[0] + BOARD_HEIGHT) % BOARD_HEIGHT;
-    int dy = (closestEnemy[1] - tankInfo.location[1] + BOARD_WIDTH) % BOARD_WIDTH;
-    
-    // Try to turn towards enemy
-    if (dx != 0 || dy != 0) {
-        // Calculate desired direction
-        array<int, 2> desiredDir = {0, 0};
-        if (abs(dx) > abs(dy)) {
-            desiredDir = {dx > 0 ? 1 : -1, 0};
-        } else {
-            desiredDir = {0, dy > 0 ? 1 : -1};
-        }
-        
-        // Check if we need to turn
-        if (tankInfo.dir[0] != desiredDir[0] || tankInfo.dir[1] != desiredDir[1]) {
-            // Calculate turn needed
-            int dotProduct = tankInfo.dir[0] * desiredDir[0] + tankInfo.dir[1] * desiredDir[1];
-            int crossProduct = tankInfo.dir[0] * desiredDir[1] - tankInfo.dir[1] * desiredDir[0];
-            
-            if (crossProduct > 0) {
-                // Try 45 degree turn first
-                array<int, 2> newDir = {tankInfo.dir[0] - tankInfo.dir[1], tankInfo.dir[0] + tankInfo.dir[1]};
-                int newX = (tankInfo.location[0] + newDir[0] + BOARD_HEIGHT) % BOARD_HEIGHT;
-                int newY = (tankInfo.location[1] + newDir[1] + BOARD_WIDTH) % BOARD_WIDTH;
-                
-                if (board[newX][newY] != MINE && isPositionSafeFromShells(newX, newY)) {
-                    return Action::Type::TURN_R_45;
-                }
-                return Action::Type::TURN_R_90;
-            } else {
-                // Try 45 degree turn first
-                array<int, 2> newDir = {tankInfo.dir[0] + tankInfo.dir[1], -tankInfo.dir[0] + tankInfo.dir[1]};
-                int newX = (tankInfo.location[0] + newDir[0] + BOARD_HEIGHT) % BOARD_HEIGHT;
-                int newY = (tankInfo.location[1] + newDir[1] + BOARD_WIDTH) % BOARD_WIDTH;
-                
-                if (board[newX][newY] != MINE && isPositionSafeFromShells(newX, newY)) {
-                    return Action::Type::TURN_L_45;
-                }
-                return Action::Type::TURN_L_90;
+    for (const auto& dir : directions) {
+        array<int, 2> trajectory = {dir[0], dir[1]};
+        array<int, 2> enemyPos = {enemyTanks[0].first, enemyTanks[0].second};
+        if (isInBulletPath(tankInfo.location, trajectory, enemyPos, gameBoard)) {
+            Turn turn = rotation(tankInfo.dir, trajectory);
+            Action::Type action = turnToAction(turn);
+            if (action != Action::Type::NOP) {
+                return action;
             }
         }
-        
-        // If facing the right direction, try to move forward
-        int newX = (tankInfo.location[0] + tankInfo.dir[0] + BOARD_HEIGHT) % BOARD_HEIGHT;
-        int newY = (tankInfo.location[1] + tankInfo.dir[1] + BOARD_WIDTH) % BOARD_WIDTH;
-        
-        if (board[newX][newY] != MINE && isPositionSafeFromShells(newX, newY)) {
-            return Action::Type::MOVE_FORWARD;
-        }
     }
     
-    // If we can't move forward, try turning
-    for (const auto& turn : {Action::Type::TURN_R_45, Action::Type::TURN_L_45,
-                            Action::Type::TURN_R_90, Action::Type::TURN_L_90}) {
-        array<int, 2> newDir = tankInfo.dir;
-        if (turn == Action::Type::TURN_R_45) {
-            newDir = {tankInfo.dir[0] - tankInfo.dir[1], tankInfo.dir[0] + tankInfo.dir[1]};
-        } else if (turn == Action::Type::TURN_L_45) {
-            newDir = {tankInfo.dir[0] + tankInfo.dir[1], -tankInfo.dir[0] + tankInfo.dir[1]};
-        } else if (turn == Action::Type::TURN_R_90) {
-            newDir = {tankInfo.dir[1], -tankInfo.dir[0]};
-        } else {
-            newDir = {-tankInfo.dir[1], tankInfo.dir[0]};
-        }
-        
-        int newX = (tankInfo.location[0] + newDir[0] + BOARD_HEIGHT) % BOARD_HEIGHT;
-        int newY = (tankInfo.location[1] + newDir[1] + BOARD_WIDTH) % BOARD_WIDTH;
-        
-        if (board[newX][newY] != MINE && isPositionSafeFromShells(newX, newY)) {
-            return turn;
-        }
+    // Check if enemy is to the left or right
+    int dx = enemyTank.first - tankInfo.location[0];
+    
+    array<int, 2> targetDir = {0, dx > 0 ? 1 : -1}; // Right or left
+    Turn turn = rotation(tankInfo.dir, targetDir);
+    Action::Type action = turnToAction(turn);
+    if (action != Action::Type::NOP) {
+        return action;
+    }
+
+    // If we're already aligned, check if we can move forward
+    array<int, 2> nextPos = tank.potentialMove();
+    if (board[nextPos[0]][nextPos[1]] != WALL && 
+        board[nextPos[0]][nextPos[1]] != DAMAGED_WALL && 
+        board[nextPos[0]][nextPos[1]] != MINE) {
+        return Action::Type::MOVE_FORWARD;
     }
     
-    // If no moves found, stay in place
     return Action::Type::NOP;
 }
 
@@ -395,17 +237,17 @@ vector<Action> AlgorithmBasic::decideNextActions() {
     for (const auto& tank : myTanks) {
         if (!tank.getIsTankAlive()) continue;
         
-        // First priority: Check if we can shoot an enemy
-        if (canShootEnemy(tank)) {
-            actions.push_back(Action(Action::Type::SHOOT, tank));
-            continue;
-        }
-        
-        // Second priority: Check if tank is in danger
+        // First priority: Check if tank is in danger
         if (isInDanger(tank)) {
             // Find a safe move to avoid danger
             Action::Type safeMove = findSafeMove(tank);
             actions.push_back(Action(safeMove, tank));
+            continue;
+        }
+
+        // Second priority: Check if we can shoot an enemy
+        if (canShootEnemy(tank)) {
+            actions.push_back(Action(Action::Type::SHOOT, tank));
             continue;
         }
         
