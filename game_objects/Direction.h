@@ -33,6 +33,7 @@ int vectorMultiply(array<int, 2> d1, array<int, 2> d2);
 int inverseMap(array<int, 2> d);
 array<int, 2> getDirection(array<int, 2> d, Turn t);
 bool isInBulletPath(array<int, 2> start, array<int, 2> trajectory, array<int, 2> end, GameBoard *gameBoard);
+bool isInBulletPathSimple(array<int, 2> start, array<int, 2> trajectory, array<int, 2> end);
 array<int,2> directionBetweenPoints(Point &start, Point &end);
 Turn rotation(array<int,2> currDir, array<int,2> newDir);
 Action::Type turnToAction(Turn t);

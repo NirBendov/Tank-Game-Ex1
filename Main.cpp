@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
 
     cout << "Initializing algorithms..." << endl;
     // Example: both players using AlgorithmPlayerTwo
-    AlgorithmPlayerTwo algo1(1, &gameBoard);
+    AlgorithmBasic algo1(1, &gameBoard);
     AlgorithmBasic algo2(2, &gameBoard);
     cout << "Algorithms initialized" << endl;
 

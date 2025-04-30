@@ -2,49 +2,62 @@ Game Moves (by step):
 
 Step 1:
 Player 1: TURN_RIGHT_45 on tank at (2,2)
-Player 2: SHOOT on tank at (2,5)
+Player 2: TURN_LEFT_90 on tank at (5,5)
 
 Step 2:
-Player 1: MOVE_FORWARD on tank at (2,2)
-Player 2: TURN_RIGHT_45 on tank at (2,5)
+Player 1: SHOOT on tank at (2,2)
+Player 2: TURN_LEFT_45 on tank at (5,5)
 
 Step 3:
-Player 1: NO_OPERATION on tank at (3,3)
-Player 2: MOVE_FORWARD on tank at (2,5)
+Player 1: MOVE_FORWARD on tank at (2,2)
+Player 2: SHOOT on tank at (5,5)
 
 Step 4:
 Player 1: NO_OPERATION on tank at (3,3)
-Player 2: TURN_LEFT_45 on tank at (1,4)
+Player 2: MOVE_FORWARD on tank at (5,5)
 
 Step 5:
 Player 1: NO_OPERATION on tank at (3,3)
-Player 2: TURN_LEFT_45 on tank at (1,4)
+Player 2: NO_OPERATION on tank at (6,6)
 
 Step 6:
 Player 1: NO_OPERATION on tank at (3,3)
-Player 2: TURN_RIGHT_45 on tank at (1,4)
+Player 2: NO_OPERATION on tank at (6,6)
 
 Step 7:
-Player 1: NO_OPERATION on tank at (3,3)
-Player 2: TURN_LEFT_45 on tank at (1,4)
+Player 1: SHOOT on tank at (3,3)
+Player 2: NO_OPERATION on tank at (6,6)
 
 Step 8:
-Player 1: NO_OPERATION on tank at (3,3)
-Player 2: TURN_RIGHT_45 on tank at (1,4)
+Player 1: TURN_RIGHT_90 on tank at (3,3)
+Player 2: SHOOT on tank at (6,6)
 
 Step 9:
-Player 1: NO_OPERATION on tank at (3,3)
-Player 2: TURN_LEFT_45 on tank at (1,4)
+Player 1: TURN_LEFT_90 on tank at (3,3)
+Player 2: NO_OPERATION on tank at (6,6)
 
 Step 10:
 Player 1: NO_OPERATION on tank at (3,3)
-Player 2: TURN_RIGHT_45 on tank at (1,4)
+Player 2: NO_OPERATION on tank at (6,6)
 
 Step 11:
 Player 1: NO_OPERATION on tank at (3,3)
-Player 2: TURN_LEFT_45 on tank at (1,4)
+Player 2: NO_OPERATION on tank at (6,6)
+
+Step 12:
+Player 1: SHOOT on tank at (3,3)
+Player 2: NO_OPERATION on tank at (6,6)
+
+Step 13:
+Player 1: MOVE_FORWARD on tank at (3,3)
+Player 2: MOVE_FORWARD on tank at (6,6)
+
+Step 14:
+Player 1: NO_OPERATION on tank at (4,4)
+Player 2: NO_OPERATION on tank at (7,7)
 
 Game Result:
-Tie - Both players lost all their tanks
+Player 1 won!
 
 Tank Deaths (in order of occurrence):
+Player 2's tank at position (7,7) died from: Shell hit

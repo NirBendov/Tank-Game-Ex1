@@ -44,7 +44,7 @@ std::vector<std::vector<char>> process(const std::string& fileName) {
     std::array<int, 2> d = dims(s);
     BoardConstants::BOARD_HEIGHT = d[0];
     BoardConstants::BOARD_WIDTH = d[1];
-    std::cout << "Board dimensions: " << BOARD_HEIGHT << "x" << BOARD_WIDTH << std::endl;
+    std::cout << "Board dimensions: " << BoardConstants::BOARD_HEIGHT << "x" << BoardConstants::BOARD_WIDTH << std::endl;
     
     std::vector<std::vector<char>> board;
     int player1_count = 0;

@@ -4,6 +4,7 @@
 #include "../algorithms/Pathfinder.h"
 #include <cmath>
 #include <array>
+#include <iostream>
 
 using namespace std;
 
@@ -95,6 +96,27 @@ bool isInBulletPath(array<int, 2> start, array<int, 2> trajectory, array<int, 2>
     }
     
     return true;
+}
+
+bool isInBulletPathSimple(array<int, 2> start, array<int, 2> trajectory, array<int, 2> end) {
+    array<int, 2> current = start;
+
+    // Keep moving along the trajectory until we either find the end point or wrap around
+    for (int i = 0; i < max(BoardConstants::BOARD_WIDTH, BoardConstants::BOARD_HEIGHT) + 1; i++) {
+        // Move one step in the trajectory direction
+        current[0] = (current[0] + trajectory[0] + BoardConstants::BOARD_WIDTH) % BoardConstants::BOARD_WIDTH;
+        current[1] = (current[1] + trajectory[1] + BoardConstants::BOARD_HEIGHT) % BoardConstants::BOARD_HEIGHT;
+        // If we've found the end point, return true
+        if (current[0] == end[0] && current[1] == end[1]) {
+            return true;
+        }
+        
+        // If we've wrapped around to the start point, return false
+        if (current[0] == start[0] && current[1] == start[1]) {
+            return false;
+        }
+    }
+    return false;
 }
 
 array<int,2> directionBetweenPoints(Point &start, Point &end) {

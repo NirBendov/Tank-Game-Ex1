@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <map>
 #include <array>
+#include <iostream>
 
 using namespace std;
 using namespace BoardConstants;
@@ -49,7 +50,7 @@ bool AlgorithmBasic::canShootEnemy(const Tank& tank) const {
     
     // Check if any enemy tank is in the line of fire
     for (const auto& enemyPos : enemyTanks) {
-        if (isInBulletPath(tankInfo.location, tankInfo.dir, {enemyPos.first, enemyPos.second}, gameBoard)) {
+        if (isInBulletPathSimple(tankInfo.location, tankInfo.dir, {enemyPos.first, enemyPos.second})) {
             return true;
         }
     }
@@ -190,14 +191,15 @@ Action::Type AlgorithmBasic::findShootingPosition(const Tank& tank) const {
     const auto& enemyTanks = gameBoard->getEnemyTankPositions(playerId);
     auto& enemyTank = enemyTanks[0];
     
-    if (isInBulletPath(tankInfo.location, tankInfo.dir, {enemyTank.first, enemyTank.second}, gameBoard)) {
+    if (isInBulletPathSimple(tankInfo.location, tankInfo.dir, {enemyTank.first, enemyTank.second})) {
+        std::cout << "In bullet path waiting for cooldown" << std::endl;
         return Action::Type::NOP;
     }
     
     for (const auto& dir : directions) {
         array<int, 2> trajectory = {dir[0], dir[1]};
         array<int, 2> enemyPos = {enemyTanks[0].first, enemyTanks[0].second};
-        if (isInBulletPath(tankInfo.location, trajectory, enemyPos, gameBoard)) {
+        if (isInBulletPathSimple(tankInfo.location, trajectory, enemyPos)) {
             Turn turn = rotation(tankInfo.dir, trajectory);
             Action::Type action = turnToAction(turn);
             if (action != Action::Type::NOP) {
@@ -223,7 +225,7 @@ Action::Type AlgorithmBasic::findShootingPosition(const Tank& tank) const {
         board[nextPos[0]][nextPos[1]] != MINE) {
         return Action::Type::MOVE_FORWARD;
     }
-    
+    std::cout << "No valid shooting position found" << std::endl;
     return Action::Type::NOP;
 }
 
