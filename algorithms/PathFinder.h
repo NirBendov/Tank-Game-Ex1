@@ -26,6 +26,7 @@ bool isValid(int x, int y, const vector<vector<char>>& grid, const vector<vector
 Point wrapPoint(int x, int y, int rows, int cols);
 vector<Point> bfsPathfinder(const vector<vector<char>>& grid, Point start, Point end, bool includeWalls);
 int dist(Point p1, Point p2, int rows, int cols);
+int distArr(array<int,2> p1, array<int,2> p2, int rows, int cols);
 void updatePathEnd(vector<Point> &path, Point &newEnd, int rows, int cols);
 void updatePathStart(vector<Point> &path, Point &newStart, int rows, int cols);
 bool isPathStraight(vector<Point> &path, int rows, int columns);

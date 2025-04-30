@@ -86,6 +86,10 @@ int dist(Point p1, Point p2, int rows, int cols) {
     return max(dx ,dy);
 }
 
+int distArr(array<int,2> p1, array<int,2> p2, int rows, int cols) {
+    return dist({p1[0], p1[1]}, {p2[0], p2[1]}, rows, cols);
+}
+
 void updatePathEnd(vector<Point> &path, Point &newEnd, int rows, int cols) {
     Point end = path.back();
     path.pop_back();

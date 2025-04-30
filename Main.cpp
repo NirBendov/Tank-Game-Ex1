@@ -40,8 +40,8 @@ int main(int argc, char* argv[]) {
 
     cout << "Initializing algorithms..." << endl;
     // Example: both players using AlgorithmPlayerTwo
-    AlgorithmBasic algo1(1, &gameBoard);
-    AlgorithmBasic algo2(2, &gameBoard);
+    AlgorithmPlayerTwo algo1(1, &gameBoard);
+    AlgorithmPlayerTwo algo2(2, &gameBoard);
     cout << "Algorithms initialized" << endl;
 
     int step = 0;

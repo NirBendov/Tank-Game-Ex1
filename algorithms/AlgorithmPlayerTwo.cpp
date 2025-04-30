@@ -70,6 +70,8 @@ Action AlgorithmPlayerTwo::panicRoutine() {
 }
 
 Action AlgorithmPlayerTwo::regularRoutine() {
+    printPath(pathToEnemy);
+    cout << tank->getInfo().dir[0] << ", " << tank->getInfo().dir[1]<< endl;
     cout << "Starting regular routine" << endl;
     pair<int, int> enemyPosition = gameBoard->getEnemyTankPositions(playerId)[0];
     Point enemy = {enemyPosition.first, enemyPosition.second};
@@ -100,72 +102,42 @@ Action AlgorithmPlayerTwo::regularRoutine() {
     array<int,2> tankLocation = tank->getInfo().location;
     for (Shell shell : shells) {
         Moveable::Info shellInfo = shell.getInfo();
-        vector<array<int, 2>> dangerousDirections;
-        if (isInBulletPath(shellInfo.location, shellInfo.dir, tankLocation, gameBoard)) {
+        if (isInBulletPath(shellInfo.location, shellInfo.dir, tankLocation, gameBoard)
+            && distArr(shellInfo.location, tankLocation, rows, columns) < 4) {
             cout << "Shell in path, dodging" << endl;
-            dangerousDirections.push_back(shellInfo.dir);
             Action::Type move = possibleDodgeMove(*tank, shell);
-            mode = OperationMode::DODGE;
             return {move, *tank};
         }
     }
 
-    if (mode != OperationMode::DODGE) {
-        cout << "Not in dodge mode" << endl;
-        vector<vector<char>> board = gameBoard->getBoard();
-        int rows = board.size();
-        int columns = board[0].size();
+    cout << mode << endl;
 
-        mode = OperationMode::CHASE;
-        if (isPathStraight(pathToEnemy, rows, columns)) {
-            cout << "Path is straight" << endl;
-            array<int,2> pathDir = calcDirection(pathToEnemy, rows, columns);
-            array<int,2> dir = tank->getInfo().dir;
-            // if (isPathClear(pathToEnemy, board)) {
-                cout << "Path is clear" << endl;
-                if (pathDir[0] == dir[0] && pathDir[1] == dir[1]) {
-                    cout << "Tank facing enemy, shooting" << endl;
-                    mode = OperationMode::HUNT;
-                    return {Action::Type::SHOOT, *tank};
-                }
-                else {
-                    cout << "Turning to face enemy" << endl;
-                    Turn t = rotation(dir, pathDir);
-                    cout << "Turn taken:" << t << endl;
-                    return {turnToAction(t), *tank};
-                }
-            // }
-        }
-        cout << "Following path" << endl;
-        return {followPath(), *tank};
+    if (isPathStraight(pathToEnemy, rows, columns)) {
+        cout << "Path is straight" << endl;
+        array<int,2> pathDir = calcDirection(pathToEnemy, rows, columns);
+        array<int,2> dir = tank->getInfo().dir;
+        // if (isPathClear(pathToEnemy, board)) {
+            cout << "Path is clear" << endl;
+            if (pathDir[0] == dir[0] && pathDir[1] == dir[1] && tank->getShootingCooldown() == 0) {
+                cout << "Tank facing enemy, shooting" << endl;
+                return {Action::Type::SHOOT, *tank};
+            }
+            else if (tank->getShootingCooldown() == 0) {
+                cout << "Turning to face enemy" << endl;
+                Turn t = rotation(dir, pathDir);
+                cout << "Turn taken:" << t << endl;
+                return {turnToAction(t), *tank};
+            }
+            else {
+                return {Action::Type::NOP, *tank};
+            }
+        // }
     }
-
-    cout << "No action needed" << endl;
-    return {Action::Type::NOP, *tank};
-}
-
-// Don't return to the same tile you just escaped from
-void AlgorithmPlayerTwo::addTileToAvoid() {
-    array<int,2> tankPosition = tank->getInfo().location;
-    tilesToAvoid.push_back({tankPosition[1], tankPosition[0]});
-}
-
-// Tile should be safe again after the shell already passed
-void AlgorithmPlayerTwo::removeTilesToAvoid() {
-    vector<Point>::iterator it = tilesToAvoid.begin();
-    while(it != tilesToAvoid.end()) {
-        Point p = *it;
-        cout << "points to avoid player" << playerId << endl;
-        cout << p.x << ", " << p.y << endl;
-        if (gameBoard->getBoard()[p.x][p.y] == BoardConstants::SHELL)
-            tilesToAvoid.erase(find(tilesToAvoid.begin(), tilesToAvoid.end(), p));
-        else
-            it++;
-    }
+    cout << "Following path" << endl;
+    return {followPath(), *tank};
 }
 
 void AlgorithmPlayerTwo::update() {
-    removeTilesToAvoid();
     if (pathToEnemy.empty())
         mode = OperationMode::PANIC;
 }
@@ -197,8 +169,7 @@ Action::Type AlgorithmPlayerTwo::possibleDodgeMove(Tank &tank, Shell &shell) {
     // if tank direction isnt parallel to bullet direction
     Point p = {(location[0] + dir[0])%rows, (location[1] + dir[1])%columns};
     if ((res != 2) && (res != -2) 
-    && (board[(location[0] + dir[0])%rows][(location[1] + dir[1])%columns] == BoardConstants::EMPTY_SPACE)
-    && std::find(tilesToAvoid.begin(), tilesToAvoid.end(), p) == tilesToAvoid.end()) {
+    && (board[(location[0] + dir[0])%rows][(location[1] + dir[1])%columns] == BoardConstants::EMPTY_SPACE)) {
         // Move out of the shell's path if possible
         updatePathStart(pathToEnemy, p, rows, columns);
         return Action::Type::MOVE_FORWARD;
@@ -236,22 +207,32 @@ Action::Type AlgorithmPlayerTwo::followPath() {
     int rows = board.size();
     int columns = board[0].size();
     Moveable::Info info = tank->getInfo();
-
     Point &start = pathToEnemy[0];
+    cout << "current: " << start.x << ", " << start.y << endl;
     Point &next = pathToEnemy[1];
+    cout << "next: " << next.x << ", " << next.y << endl;
     array<int,2> dir = directionBetweenPoints(start, next);
-    if (dir == info.dir) {
+    if (dir[0] == info.dir[0] && dir[1] == info.dir[1]) {
+        cout << "there" << endl;
         char tile = board[(info.location[0] + dir[0])%rows][(info.location[1] + dir[1])%columns];
-        if (tile == BoardConstants::WALL || tile == BoardConstants::DAMAGED_WALL)
+        cout << tile << endl;
+        cout << (info.location[0] + dir[0])%rows << ", " << (info.location[1] + dir[1])%columns << endl;
+        if ((tile == BoardConstants::WALL || tile == BoardConstants::DAMAGED_WALL) && tank->getShootingCooldown() == 0) {
+            cout << "phere" << endl;
             return Action::Type::SHOOT;
-        if (std::find(tilesToAvoid.begin(), tilesToAvoid.end(), next) != tilesToAvoid.end()) {
+        }
+        else {
+            cout << "ghere" << endl;
             pathToEnemy.erase(pathToEnemy.begin());
             return Action::Type::MOVE_FORWARD;
         }
-        return Action::Type::NOP;
     } 
     else {
+        cout << "here" << endl;
         Turn t = rotation(info.dir, dir);
+        cout << t << endl;
         return turnToAction(t);
     }
+    cout << "where" << endl;
+    return Action::Type::NOP;
 }

@@ -134,8 +134,12 @@ array<int,2> directionBetweenPoints(Point &start, Point &end) {
 }
 
 Turn rotation(array<int,2> currDir, array<int,2> newDir) {
-    int rotation = inverseMap(newDir) - inverseMap(currDir);
-    return rotation > 4 ? Turn(rotation - 8) : Turn(rotation);
+    int rotation = (inverseMap(newDir) - inverseMap(currDir))%8;
+    if (rotation <= -4)
+        rotation += 8;
+    else if (rotation > 4)
+        rotation -= 8;
+    return Turn(rotation);
 }
 
 Action::Type turnToAction(Turn t) {

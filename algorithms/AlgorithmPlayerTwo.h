@@ -24,23 +24,21 @@ private:
         DODGE,
         PANIC
     };
+
     OperationMode mode;
     Tank* tank;
     vector<Point> pathToEnemy;
-    vector<Point> tilesToAvoid;
     bool isMovingBackward = false;
     int backwardMoveTurnsLeft = 0;
+    Action::Type possibleDodgeMove(Tank &tank, Shell &shell);
+    Action::Type followPath();
+    Action panicRoutine();
+    Action regularRoutine();
 public:
     AlgorithmPlayerTwo(int playerId, GameBoard* gameBoard);
     ~AlgorithmPlayerTwo() override;
 
     vector<Action> decideNextActions() override;
-    Action::Type possibleDodgeMove(Tank &tank, Shell &shell);
-    Action::Type followPath();
-    Action panicRoutine();
-    Action regularRoutine();
-    void addTileToAvoid();
-    void removeTilesToAvoid();
     void defaultMode() override;
     void update() override;
 };
