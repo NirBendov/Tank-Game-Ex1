@@ -23,6 +23,7 @@ class AlgorithmBasic : public Algorithm
 {
 private:
     int shootingCooldown = 0;
+    Tank* myTank = nullptr;
     bool isInDanger(const Tank& tank) const;
     bool canShootEnemy(const Tank& tank) const;
     bool canShootFromPosition(const Tank& tank, int x, int y) const;
@@ -37,4 +38,6 @@ public:
     ~AlgorithmBasic();
     
     vector<Action> decideNextActions() override;
+    void defaultMode() override;
+    void update() override;
 }; 

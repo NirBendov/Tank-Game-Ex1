@@ -15,9 +15,12 @@ using namespace BoardConstants;
 
 AlgorithmBasic::AlgorithmBasic(int playerId, GameBoard* gameBoard) 
     : Algorithm(playerId, gameBoard) {
+    myTank = new Tank(gameBoard->getPlayerTanks(playerId)[0]);
+    myTank->assignAlgorithm(this);
 }
 
 AlgorithmBasic::~AlgorithmBasic() {
+    delete myTank;
 }
 
 bool AlgorithmBasic::isInDanger(const Tank& tank) const {
@@ -54,7 +57,7 @@ bool AlgorithmBasic::isInDanger(const Tank& tank) const {
 }
 
 bool AlgorithmBasic::canShootEnemy(const Tank& tank) const {
-    if (shootingCooldown > 0) {
+    if (tank.getShootingCooldown() > 0) {
         return false;
     }
     
@@ -195,11 +198,51 @@ Action::Type AlgorithmBasic::findSafeMove(const Tank& tank) const {
         }
     }
     
-    // If no immediate danger, try to move forward if safe
-    int newX = (tankInfo.location[0] + tankInfo.dir[0] + BOARD_HEIGHT) % BOARD_HEIGHT;
-    int newY = (tankInfo.location[1] + tankInfo.dir[1] + BOARD_WIDTH) % BOARD_WIDTH;
+    // Check if there's a wall in front of us using potentialMove
+    array<int, 2> nextPos = tank.potentialMove();
+    int newX = nextPos[0];
+    int newY = nextPos[1];
     
-    // Check if the forward position is safe
+    if (board[newX][newY] == WALL || board[newX][newY] == DAMAGED_WALL) {
+        // Try to find a direction without a wall
+        bool hasValidMove = false;
+        for (const auto& turn : {Action::Type::TURN_R_45, Action::Type::TURN_L_45, 
+                                Action::Type::TURN_R_90, Action::Type::TURN_L_90}) {
+            // Create a temporary tank to test potential moves
+            Tank tempTank = tank;
+            tempTank.assignAlgorithm(nullptr); // Clear the algorithm pointer for safety
+            
+            if (turn == Action::Type::TURN_R_45) {
+                tempTank.turn(Turn::RIGHT_45);
+            } else if (turn == Action::Type::TURN_L_45) {
+                tempTank.turn(Turn::LEFT_45);
+            } else if (turn == Action::Type::TURN_R_90) {
+                tempTank.turn(Turn::RIGHT_90);
+            } else {
+                tempTank.turn(Turn::LEFT_90);
+            }
+            
+            // Check the potential move in the new direction
+            nextPos = tempTank.potentialMove();
+            newX = nextPos[0];
+            newY = nextPos[1];
+            
+            if (board[newX][newY] != WALL && board[newX][newY] != DAMAGED_WALL && 
+                board[newX][newY] != MINE && isPositionSafeFromShells(newX, newY)) {
+                hasValidMove = true;
+                return turn;
+            }
+        }
+        
+        // If no valid moves found (completely surrounded by walls), try to shoot
+        if (!hasValidMove && tank.getShootingCooldown() == 0) {
+            return Action::Type::SHOOT;
+        }
+        
+        return Action::Type::NOP;
+    }
+    
+    // If no wall ahead and position is safe, move forward
     if (board[newX][newY] != MINE && isPositionSafeFromShells(newX, newY)) {
         return Action::Type::MOVE_FORWARD;
     }
@@ -207,19 +250,24 @@ Action::Type AlgorithmBasic::findSafeMove(const Tank& tank) const {
     // If forward is not safe, try turning
     for (const auto& turn : {Action::Type::TURN_R_45, Action::Type::TURN_L_45, 
                             Action::Type::TURN_R_90, Action::Type::TURN_L_90}) {
-        array<int, 2> newDir = tankInfo.dir;
+        // Create a temporary tank to test potential moves
+        Tank tempTank = tank;
+        tempTank.assignAlgorithm(nullptr); // Clear the algorithm pointer for safety
+        
         if (turn == Action::Type::TURN_R_45) {
-            newDir = {tankInfo.dir[0] - tankInfo.dir[1], tankInfo.dir[0] + tankInfo.dir[1]};
+            tempTank.turn(Turn::RIGHT_45);
         } else if (turn == Action::Type::TURN_L_45) {
-            newDir = {tankInfo.dir[0] + tankInfo.dir[1], -tankInfo.dir[0] + tankInfo.dir[1]};
+            tempTank.turn(Turn::LEFT_45);
         } else if (turn == Action::Type::TURN_R_90) {
-            newDir = {tankInfo.dir[1], -tankInfo.dir[0]};
+            tempTank.turn(Turn::RIGHT_90);
         } else {
-            newDir = {-tankInfo.dir[1], tankInfo.dir[0]};
+            tempTank.turn(Turn::LEFT_90);
         }
         
-        newX = (tankInfo.location[0] + newDir[0] + BOARD_HEIGHT) % BOARD_HEIGHT;
-        newY = (tankInfo.location[1] + newDir[1] + BOARD_WIDTH) % BOARD_WIDTH;
+        // Check the potential move in the new direction
+        nextPos = tempTank.potentialMove();
+        newX = nextPos[0];
+        newY = nextPos[1];
         
         if (board[newX][newY] != MINE && isPositionSafeFromShells(newX, newY)) {
             return turn;
@@ -350,7 +398,6 @@ vector<Action> AlgorithmBasic::decideNextActions() {
         // First priority: Check if we can shoot an enemy
         if (canShootEnemy(tank)) {
             actions.push_back(Action(Action::Type::SHOOT, tank));
-            shootingCooldown = SHOOT_COOLDOWN + 1;
             continue;
         }
         
@@ -367,10 +414,15 @@ vector<Action> AlgorithmBasic::decideNextActions() {
         actions.push_back(Action(move, tank));
     }
     
-    // Decrease shooting cooldown
-    if (shootingCooldown > 0) {
-        shootingCooldown--;
-    }
-    
     return actions;
+}
+
+void AlgorithmBasic::defaultMode() {
+    // Basic algorithm doesn't have different modes
+    // This is a no-op implementation
+}
+
+void AlgorithmBasic::update() {
+    // Basic algorithm doesn't need to update any state
+    // This is a no-op implementation
 } 

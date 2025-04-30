@@ -37,10 +37,6 @@ vector<Point> bfsPathfinder(const vector<vector<char>>& grid, Point start, Point
     int rows = grid.size();
     int cols = grid[0].size();
 
-    cout << "Starting BFS from (" << start.x << "," << start.y << ") to (" << end.x << "," << end.y << ")" << endl;
-    cout << "Grid size: " << rows << "x" << cols << endl;
-    cout << "Include walls: " << (includeWalls ? "true" : "false") << endl;
-
     vector<vector<bool>> visited(rows, vector<bool>(cols, false));
     vector<vector<Point>> parent(rows, vector<Point>(cols, {-1, -1}));
 
@@ -53,10 +49,8 @@ vector<Point> bfsPathfinder(const vector<vector<char>>& grid, Point start, Point
         q.pop();
 
         Point pt = current.pt;
-        cout << "Exploring point (" << pt.x << "," << pt.y << ")" << endl;
 
         if (pt.x == end.x && pt.y == end.y) {
-            cout << "Found end point!" << endl;
             // Reconstruct path
             vector<Point> path;
             while (!(pt.x == -1 && pt.y == -1)) {
@@ -64,15 +58,12 @@ vector<Point> bfsPathfinder(const vector<vector<char>>& grid, Point start, Point
                 pt = parent[pt.x][pt.y];
             }
             reverse(path.begin(), path.end());
-            cout << "Path length: " << path.size() << endl;
             return path;
         }
 
         for (const auto& dir : directions) {
             Point neighbor = wrapPoint(pt.x + dir[1], pt.y + dir[0], rows, cols);
-            cout << "Checking neighbor (" << neighbor.x << "," << neighbor.y << "): ";
             if (isValid(neighbor.x, neighbor.y, grid, visited, includeWalls)) {
-                cout << "valid" << endl;
                 visited[neighbor.x][neighbor.y] = true;
                 parent[neighbor.x][neighbor.y] = pt;
                 q.push({neighbor, current.dist + 1});
@@ -82,7 +73,6 @@ vector<Point> bfsPathfinder(const vector<vector<char>>& grid, Point start, Point
         }
     }
 
-    cout << "No path found without walls" << endl;
     if (includeWalls) {
         return {};
     }

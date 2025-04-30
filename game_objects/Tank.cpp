@@ -55,7 +55,7 @@ void Tank::decreaseShootingCooldown() {
     }
 }
 
-int Tank::getShootingCooldown() {
+int Tank::getShootingCooldown() const {
     return shootingCooldown;
 }
 

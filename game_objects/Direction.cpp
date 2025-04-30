@@ -39,31 +39,61 @@ array<int, 2> getDirection(array<int, 2> d, Turn t) {
 }
 
 bool isInBulletPath(array<int, 2> start, array<int, 2> trajectory, array<int, 2> end, GameBoard *gameBoard) {
-    int dy = end[0] - start[0];
+    // Check if end point is in the direction of trajectory
     int dx = end[1] - start[1];
-    if ((dx != 0 && trajectory[1] != 0 && dy/dx != trajectory[0]/trajectory[1]) 
-    || (dy != 0 && trajectory[0] && dy/dx != trajectory[1]/trajectory[0])) 
+    int dy = end[0] - start[0];
+    
+    // Handle wrap-around
+    if (abs(dx) > gameBoard->getBoard().size() / 2) {
+        dx = dx > 0 ? dx - gameBoard->getBoard().size() : dx + gameBoard->getBoard().size();
+    }
+    if (abs(dy) > gameBoard->getBoard()[0].size() / 2) {
+        dy = dy > 0 ? dy - gameBoard->getBoard()[0].size() : dy + gameBoard->getBoard()[0].size();
+    }
+    
+    // Check if end point is in the direction of trajectory
+    if ((dx != 0 && trajectory[1] == 0) || (dy != 0 && trajectory[0] == 0)) {
         return false;
-    dy = dy == 0 ? dy : dy/abs(dy);
-    dx = dx == 0 ? dx : dx/abs(dx);
-    if (!(trajectory[0] == dy && trajectory[1] == dx))
-        return false;
-
-    vector<vector<char>> board = gameBoard->getBoard();
-    int rows = board.size();
-    int columns = board[0].size();
-
-    int m = trajectory[0] != 0 ? start[0] : start[1];
-    int n = trajectory[0] != 0 ? end[0] : end[1];
-    for (int i = 0; i <= abs(m-n); ++i) {
-        int y = (start[0] + i * trajectory[0])%rows; 
-        int x = (start[1] + i * trajectory[1])%columns;
-        if (board[y][x] != BoardConstants::EMPTY_SPACE 
-        && board[y][x] != BoardConstants::MINE
-        && board[y][x] != BoardConstants::SHELL) {
+    }
+    
+    // Check if the direction matches
+    if (dx != 0 && dy != 0) {
+        if (abs(dx) != abs(dy)) {
+            return false;
+        }
+        if ((dx > 0 && trajectory[1] < 0) || (dx < 0 && trajectory[1] > 0)) {
+            return false;
+        }
+        if ((dy > 0 && trajectory[0] < 0) || (dy < 0 && trajectory[0] > 0)) {
+            return false;
+        }
+    } else if (dx != 0) {
+        if ((dx > 0 && trajectory[1] < 0) || (dx < 0 && trajectory[1] > 0)) {
+            return false;
+        }
+    } else if (dy != 0) {
+        if ((dy > 0 && trajectory[0] < 0) || (dy < 0 && trajectory[0] > 0)) {
             return false;
         }
     }
+    
+    // Check if path is clear
+    vector<vector<char>> board = gameBoard->getBoard();
+    int rows = board.size();
+    int columns = board[0].size();
+    
+    int steps = max(abs(dx), abs(dy));
+    for (int i = 1; i < steps; ++i) {
+        int y = (start[0] + i * trajectory[0] + rows) % rows;
+        int x = (start[1] + i * trajectory[1] + columns) % columns;
+        
+        if (board[y][x] != BoardConstants::EMPTY_SPACE && 
+            board[y][x] != BoardConstants::MINE && 
+            board[y][x] != BoardConstants::SHELL) {
+            return false;
+        }
+    }
+    
     return true;
 }
 
