@@ -10,24 +10,29 @@
 #include "PathFinder.h"
 #include <array>
 #include <vector>
-
+#include <iostream>
 using namespace std;
 
 AlgorithmPlayerTwo::AlgorithmPlayerTwo(int playerId, GameBoard *gameBoard)
     : Algorithm(playerId, gameBoard), mode(OperationMode::CHASE) {
-    *tank = gameBoard->getPlayerTanks(playerId)[0];
+    cout << "Initializing AlgorithmPlayerTwo for player " << playerId << endl;
+    tank = new Tank(gameBoard->getPlayerTanks(playerId)[0]);
     tank->assignAlgorithm(this);
 
     array<int,2> tankLocation = tank->getInfo().location;
+    cout << "Tank location: (" << tankLocation[0] << "," << tankLocation[1] << ")" << endl;
     Point tankPoint = {tankLocation[0], tankLocation[1]};
-    pair<int, int> enemyTankLocation = (*gameBoard).getEnemyTankPositions(Player::PlayerId::P1)[0];
+    pair<int, int> enemyTankLocation = gameBoard->getEnemyTankPositions(playerId)[0];
+    cout << "Enemy tank location: (" << enemyTankLocation.first << "," << enemyTankLocation.second << ")" << endl;
     Point enemyTankPoint = {enemyTankLocation.first, enemyTankLocation.second};
 
     pathToEnemy = bfsPathfinder(gameBoard->getBoard(), tankPoint, enemyTankPoint, false);
+    cout << "Path to enemy found with " << pathToEnemy.size() << " points" << endl;
 }
 
 AlgorithmPlayerTwo::~AlgorithmPlayerTwo()
 {
+    delete tank;
 }
 
 void AlgorithmPlayerTwo::defaultMode() {
@@ -36,11 +41,16 @@ void AlgorithmPlayerTwo::defaultMode() {
 }
 
 vector<Action> AlgorithmPlayerTwo::decideNextActions() {
+    cout << "Deciding next actions for tank at (" << tank->getInfo().location[0] << "," << tank->getInfo().location[1] << ")" << endl;
     vector<Action> actions;
-    if (mode == OperationMode::PANIC)
+    if (mode == OperationMode::PANIC) {
+        cout << "In PANIC mode" << endl;
         actions.push_back(panicRoutine());
-    else
+    }
+    else {
+        cout << "In regular mode" << endl;
         actions.push_back(regularRoutine());
+    }
     return actions;
 } 
 
@@ -50,23 +60,29 @@ vector<Action> AlgorithmPlayerTwo::decideNextActions() {
 */
 Action AlgorithmPlayerTwo::panicRoutine() {
     if (tank->getShootingCooldown() == 0 && tank->getAmmoCount() > 0) {
+        cout << "Panic: shooting" << endl;
         return {Action::Type::SHOOT, *tank};
     }
+    cout << "Panic: no action" << endl;
     return {Action::Type::NOP, *tank};
 }
 
 Action AlgorithmPlayerTwo::regularRoutine() {
+    cout << "Starting regular routine" << endl;
     pair<int, int> enemyPosition = gameBoard->getEnemyTankPositions(playerId)[0];
     Point enemy = {enemyPosition.first, enemyPosition.second};
+    cout << "Enemy position: (" << enemy.x << "," << enemy.y << ")" << endl;
 
     vector<vector<char>> board = gameBoard->getBoard();
     int rows = board.size();
     int columns = board[0].size();
 
     updatePathEnd(pathToEnemy, enemy, rows, columns);
+    cout << "Updated path to enemy, now has " << pathToEnemy.size() << " points" << endl;
     
     // If we're in the middle of a backward move
     if (isMovingBackward) {
+        cout << "In backward move" << endl;
         if (backwardMoveTurnsLeft > 0) {
             backwardMoveTurnsLeft--;
             return Action(Action::Type::NOP, *tank);
@@ -77,12 +93,14 @@ Action AlgorithmPlayerTwo::regularRoutine() {
     }
 
     vector<Shell> shells = gameBoard->getBullets();
+    cout << "Found " << shells.size() << " shells on board" << endl;
 
     array<int,2> tankLocation = tank->getInfo().location;
     for (Shell shell : shells) {
         Moveable::Info shellInfo = shell.getInfo();
         vector<array<int, 2>> dangerousDirections;
         if (isInBulletPath(shellInfo.location, shellInfo.dir, tankLocation, gameBoard)) {
+            cout << "Shell in path, dodging" << endl;
             dangerousDirections.push_back(shellInfo.dir);
             Action::Type move = possibleDodgeMove(*tank, shell);
             mode = OperationMode::DODGE;
@@ -91,29 +109,35 @@ Action AlgorithmPlayerTwo::regularRoutine() {
     }
 
     if (mode != OperationMode::DODGE) {
+        cout << "Not in dodge mode" << endl;
         vector<vector<char>> board = gameBoard->getBoard();
         int rows = board.size();
         int columns = board[0].size();
 
         mode = OperationMode::CHASE;
         if (isPathStraight(pathToEnemy, rows, columns)) {
+            cout << "Path is straight" << endl;
             array<int,2> pathDir = calcDirection(pathToEnemy, rows, columns);
             array<int,2> dir = tank->getInfo().dir;
             if (isPathClear(pathToEnemy, board)) {
+                cout << "Path is clear" << endl;
                 if (pathDir == dir) {
+                    cout << "Tank facing enemy, shooting" << endl;
                     mode = OperationMode::HUNT;
                     return {Action::Type::SHOOT, *tank};
                 }
                 else {
+                    cout << "Turning to face enemy" << endl;
                     Turn t = rotation(dir, pathDir);
                     return {turnToAction(t), *tank};
                 }
             }
         }
+        cout << "Following path" << endl;
         return {followPath(), *tank};
     }
 
-    // For now, just return a simple action for the first tank
+    cout << "No action needed" << endl;
     return {Action::Type::NOP, *tank};
 }
 

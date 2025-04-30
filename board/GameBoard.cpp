@@ -9,7 +9,6 @@
 #include "../constants/BoardConstants.h"
 #include "../game_objects/Direction.h"
 #include "../algorithms/Algorithm.h"
-#include "../player/Player.h"
 
 using namespace std;
 using namespace BoardConstants;
@@ -30,24 +29,37 @@ GameBoard::GameBoard(const vector<vector<char>>& initialBoard)
     height = board.size();
     width = board[0].size();
 
+    cout << "Initializing game board with dimensions " << height << "x" << width << endl;
+    cout << "Initial board state:" << endl;
+    for (const auto& row : board) {
+        for (char c : row) {
+            cout << c;
+        }
+        cout << endl;
+    }
+
     // Initialize tanks based on the board
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
             if (board[i][j] == PLAYER1_TANK) {
+                cout << "Found player 1 tank at (" << i << "," << j << ")" << endl;
                 int location[2] = {i, j};
                 int direction[2] = {0, 1}; // Default direction: right
                 Tank tank(location, direction);
-                tank.assignPlayerId(Player::PlayerId::P1);
+                tank.assignPlayerId(1);
                 player1Tanks.push_back(tank);
             } else if (board[i][j] == PLAYER2_TANK) {
+                cout << "Found player 2 tank at (" << i << "," << j << ")" << endl;
                 int location[2] = {i, j};
                 int direction[2] = {0, -1}; // Default direction: left
                 Tank tank(location, direction);
-                tank.assignPlayerId(Player::PlayerId::P2);
+                tank.assignPlayerId(2);
                 player2Tanks.push_back(tank);
             }
         }
     }
+
+    cout << "Initialized " << player1Tanks.size() << " player 1 tanks and " << player2Tanks.size() << " player 2 tanks" << endl;
 }
 
 GameBoard::~GameBoard() {
@@ -80,8 +92,41 @@ void GameBoard::addToStepMoves(const Action& action, int playerId) {
     }
     
     const auto& tankLocation = action.target().getInfo().location;
+    
+    // Convert action type to descriptive string
+    std::string actionStr;
+    switch (action.type()) {
+        case Action::Type::SHOOT:
+            actionStr = "SHOOT";
+            break;
+        case Action::Type::MOVE_FORWARD:
+            actionStr = "MOVE_FORWARD";
+            break;
+        case Action::Type::MOVE_BACKWARD:
+            actionStr = "MOVE_BACKWARD";
+            break;
+        case Action::Type::TURN_R_45:
+            actionStr = "TURN_RIGHT_45";
+            break;
+        case Action::Type::TURN_R_90:
+            actionStr = "TURN_RIGHT_90";
+            break;
+        case Action::Type::TURN_L_45:
+            actionStr = "TURN_LEFT_45";
+            break;
+        case Action::Type::TURN_L_90:
+            actionStr = "TURN_LEFT_90";
+            break;
+        case Action::Type::NOP:
+            actionStr = "NO_OPERATION";
+            break;
+        default:
+            actionStr = "UNKNOWN_ACTION";
+            break;
+    }
+    
     std::string moveStr = "Player " + std::to_string(playerId) + ": " + 
-                         std::to_string(static_cast<int>(action.type())) +
+                         actionStr +
                          " on tank at (" + 
                          std::to_string(tankLocation[0]) + "," +
                          std::to_string(tankLocation[1]) + ")";
@@ -96,13 +141,13 @@ void GameBoard::addToStepMoves(const Action& action, int playerId) {
     stepMoves.push_back(action);
 }
 
-char GameBoard::calculateNewPositionCharForTank(int x, int y, Player::PlayerId playerId) {
+char GameBoard::calculateNewPositionCharForTank(int x, int y, int playerId) {
     char prevChar = board[x][y];
     
     // Check for collisions with different board elements
     switch (prevChar) {
         case BoardConstants::EMPTY_SPACE:
-            if(playerId == Player::PlayerId::P1){
+            if(playerId == 1){
                 return BoardConstants::PLAYER1_TANK; // Default to player 1 tank if empty
             } else {
                 return BoardConstants::PLAYER2_TANK; // Default to player 2 tank if empty
@@ -246,7 +291,7 @@ void GameBoard::performActions() {
         const array<int,2> location = tankInfo.location;
 
         // Get reference to the actual tank in the board
-        auto& tanks = (targetTank.getPlayerId() == Player::PlayerId::P1) ? 
+        auto& tanks = (targetTank.getPlayerId() == 1) ? 
                      player1Tanks : player2Tanks;
         Tank* actualTank = nullptr;
         for (auto& tank : tanks) {
@@ -553,11 +598,16 @@ void GameBoard::moveShells() {
         }
         
         // Handle the new position
-        board[newX][newY] = calculateNewPositionCharForShell(newX, newY);
+        char newChar = calculateNewPositionCharForShell(newX, newY);
+        board[newX][newY] = newChar;
         
         // Add the moved shell to the updated list
         bulletsPositions.push_back(shell);
     }
+    
+    // Print debug information
+    std::cout << "After moving shells, bulletsPositions size: " << bulletsPositions.size() << std::endl;
+    printBoard();
 }
 
 void GameBoard::removeBulletsAtPosition(int x, int y) {
@@ -789,23 +839,29 @@ void GameBoard::handleCollisions() {
 
     // Check if game is over after handling collisions
     checkGameOver();
-    std::cout << "Collision handling complete" << std::endl;
 }
 
 void GameBoard::executeStep() {
     std::cout << "Executing game step..." << std::endl;
-    for (int i = 0; i < 2; ++i) {
-        moveShells();
-        std::cout << "Shells moved" << (i == 0 ? "" : " again") << std::endl;
-        handleCollisions();
-        if (gameOver) {
-            std::cout << "Game over" << std::endl;
-            return;
+    
+    // Only process shells if there are any
+    if (!bulletsPositions.empty()) {
+        for (int i = 0; i < 2; ++i) {
+            moveShells();
+            std::cout << "Shells moved" << (i == 0 ? "" : " again") << std::endl;
+            handleCollisions();
+            if (gameOver) {
+                std::cout << "Game over" << std::endl;
+                return;
+            }
+            std::cout << "Collisions handled" << (i == 0 ? "" : " again") << std::endl;
+            updateAlgorithmsAfterShells();
         }
-        std::cout << "Collisions handled" << (i == 0 ? "" : " again") << std::endl;
-        updateAlgorithmsAfterShells();
+        std::cout << "Collisions handled again" << std::endl;
+    } else {
+        std::cout << "No shells to move" << std::endl;
     }
-    std::cout << "Collisions handled again" << std::endl;
+    
     performActions();
     std::cout << "Actions performed" << std::endl;
     handleCollisions();
@@ -838,8 +894,10 @@ vector<pair<int, int>> GameBoard::getEnemyTankPositions(int playerId) const {
     const auto& enemyTanks = (playerId == 1) ? player2Tanks : player1Tanks;
     
     for (const auto& tank : enemyTanks) {
-        const auto& location = tank.getInfo().location;
-        positions.push_back({location[0], location[1]});
+        if (tank.getIsTankAlive()) {  // Only include alive tanks
+            const auto& location = tank.getInfo().location;
+            positions.push_back({location[0], location[1]});
+        }
     }
     return positions;
 }
@@ -851,16 +909,27 @@ void GameBoard::saveGameMoves(const string& filename) const {
         return;
     }
 
-    // Save player 1 moves
-    outputFile << "Player 1 moves:" << endl;
-    for (const auto& move : player1Moves) {
-        outputFile << move << endl;
-    }
-
-    // Save player 2 moves
-    outputFile << "\nPlayer 2 moves:" << endl;
-    for (const auto& move : player2Moves) {
-        outputFile << move << endl;
+    // Find the maximum number of steps
+    size_t maxSteps = std::max(player1Moves.size(), player2Moves.size());
+    
+    // Save moves step by step
+    outputFile << "Game Moves (by step):" << endl;
+    for (size_t i = 0; i < maxSteps; i++) {
+        outputFile << "\nStep " << (i + 1) << ":" << endl;
+        
+        // Player 1's move for this step
+        if (i < player1Moves.size()) {
+            outputFile << player1Moves[i] << endl;
+        } else {
+            outputFile << "Player 1: No move" << endl;
+        }
+        
+        // Player 2's move for this step
+        if (i < player2Moves.size()) {
+            outputFile << player2Moves[i] << endl;
+        } else {
+            outputFile << "Player 2: No move" << endl;
+        }
     }
 
     // Save game result

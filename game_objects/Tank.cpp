@@ -8,7 +8,7 @@ Tank::Tank(int location[2], int dir[2])
   , ammoCount(MAX_AMMO)
   , shootingCooldown(0)
   , algo(nullptr)
-  , playerId(Player::PlayerId(/* some default, e.g. Player::None */))
+  , playerId(int(0))
 {}
 
 Tank::~Tank() {}
@@ -41,11 +41,11 @@ Algorithm* Tank::getAlgorithm() const {
     return algo;
 }
 
-void Tank::assignPlayerId(Player::PlayerId id) {
+void Tank::assignPlayerId(int id) {
     playerId = id;
 }
 
-Player::PlayerId Tank::getPlayerId() const {
+int Tank::getPlayerId() const {
     return playerId;
 }
 

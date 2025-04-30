@@ -2,7 +2,6 @@
 #include <vector>
 #include <string>
 #include <map>
-#include "../player/Player.h"
 #include "../game_objects/Tank.h"
 #include "../game_objects/Shell.h"
 #include "../algorithms/Action.h"
@@ -33,7 +32,7 @@ private:
     vector<pair<int, int>> backwardMoves; // Positions where tanks moved back
     int numOfTurnsSinceNoAmmo = 0; // Number of turns since all ammo was used
     bool isWall(int x, int y) const;
-    char calculateNewPositionCharForTank(int x, int y, Player::PlayerId playerId);
+    char calculateNewPositionCharForTank(int x, int y, int playerId);
     char calculateNewPositionCharForShell(int x, int y);
     char handleMultipleTanksPosition(int x, int y);
     void performActions();
@@ -69,7 +68,7 @@ public:
     
     // Get tanks for a specific player
     const vector<Tank>& getPlayerTanks(int playerId) const {
-        return playerId == Player::P1 ? player1Tanks : player2Tanks;
+        return playerId == 1 ? player1Tanks : player2Tanks;
     }
 
     // Get positions of tanks for a specific player

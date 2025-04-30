@@ -2,52 +2,68 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <filesystem>
+
 #include "file_handlers/InputHandler.h"
 #include "board/GameBoard.h"
-#include "player/Player.h"
-#include "algorithms/Algorithm.h"
 #include "algorithms/AlgorithmPlayerOne.h"
 #include "algorithms/AlgorithmPlayerTwo.h"
 #include "algorithms/Action.h"
 
 using namespace std;
+namespace fs = std::filesystem;
 
-int main() {
-    // Create game board from input
-    string inputFile = "test_board.txt"; // You should specify the actual input file
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        cerr << "Usage: " << argv[0] << " <input_file>\n";
+        return 1;
+    }
+
+    // 1. Read the input filename from argv
+    string inputFile = argv[1];
+
+    // 2. Parse out just the base name (no directory, no extension)
+    fs::path inPath{inputFile};
+    string baseName = inPath.stem().string();  // e.g. "input" from "input.txt"
+
+    // 3. Construct output filename
+    string outputFile = "output_" + baseName + ".txt";
+
+    // 4. Process input and run game
+    cout << "Processing input file..." << endl;
     vector<vector<char>> initialBoard = process(inputFile);
+    cout << "Creating game board..." << endl;
     GameBoard gameBoard(initialBoard);
+    cout << "Game board created" << endl;
 
-    // Initialize players and their algorithms
-    Player player1;
-    Player player2;
-    player1.id = Player::PlayerId::P1;
-    player2.id = Player::PlayerId::P2;
-
-    // Initialize algorithms with player IDs and game board
+    cout << "Initializing algorithms..." << endl;
+    // Example: both players using AlgorithmPlayerTwo
     AlgorithmPlayerTwo algo1(1, &gameBoard);
     AlgorithmPlayerTwo algo2(2, &gameBoard);
+    cout << "Algorithms initialized" << endl;
 
-    // Main game loop
+    int step = 0;
     while (!gameBoard.isGameOver()) {
+        cout << "Step " << ++step << endl;
         // Player 1's turn
-        vector<Action> player1Actions = algo1.decideNextActions();
-        for (const auto& action : player1Actions) {
+        cout << "Player 1's turn..." << endl;
+        for (const auto& action : algo1.decideNextActions())
             gameBoard.addToStepMoves(action, 1);
-        }
 
         // Player 2's turn
-        vector<Action> player2Actions = algo2.decideNextActions();
-        for (const auto& action : player2Actions) {
+        cout << "Player 2's turn..." << endl;
+        for (const auto& action : algo2.decideNextActions())
             gameBoard.addToStepMoves(action, 2);
-        }
-        
-        // Execute all moves for this step
+
+        cout << "Executing step..." << endl;
         gameBoard.executeStep();
+        cout << "Step executed" << endl;
     }
-    
-    // Save game moves to file
-    gameBoard.saveGameMoves("game_moves.txt");
+
+    // 5. Save moves to the dynamically constructed file
+    cout << "Saving game moves..." << endl;
+    gameBoard.saveGameMoves(outputFile);
+    cout << "Saved game moves to: " << outputFile << "\n";
 
     return 0;
 }

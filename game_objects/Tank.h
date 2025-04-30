@@ -3,7 +3,6 @@
 #include "Moveable.h"
 #include "Shell.h"
 #include "Direction.h"      
-#include "../player/Player.h"
 #include "../constants/BoardConstants.h"
 
 class Algorithm;
@@ -12,7 +11,7 @@ class Tank : public Moveable {
 private:
     int ammoCount;
     Algorithm *algo;
-    Player::PlayerId playerId;
+    int playerId;
     int moveBackwardCooldown;
     int shootingCooldown;
     bool isMovingBackward = false;
@@ -28,8 +27,8 @@ public:
     void assignAlgorithm(Algorithm *a);
     Algorithm* getAlgorithm() const;
 
-    void assignPlayerId(Player::PlayerId id);
-    Player::PlayerId getPlayerId() const;
+    void assignPlayerId(int id);
+    int getPlayerId() const;
     int getMoveBackwardCooldown() const { return moveBackwardCooldown; }
     void decreaseMoveBackwardCooldown() { 
         if (moveBackwardCooldown > 0) {

@@ -22,7 +22,7 @@ struct Node {
     int dist;
 };
 
-bool isValid(int x, int y, const vector<vector<int>>& grid, const vector<vector<bool>>& visited, bool includeWalls);
+bool isValid(int x, int y, const vector<vector<char>>& grid, const vector<vector<bool>>& visited, bool includeWalls);
 Point wrapPoint(int x, int y, int rows, int cols);
 vector<Point> bfsPathfinder(const vector<vector<char>>& grid, Point start, Point end, bool includeWalls);
 int dist(Point p1, Point p2, int rows, int cols);
