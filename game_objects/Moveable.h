@@ -24,7 +24,8 @@ public:
 
     void move();
     void moveBack();
-
+    std::array<int, 2> calculateMove() const;
+    std::array<int, 2> potentialMove() const;
 protected:
     Info info;
     array<int,2> prevPosition;

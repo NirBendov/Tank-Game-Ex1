@@ -43,8 +43,8 @@ namespace BoardConstants {
     const int NO_AMMO_TURNS = 40; // Number of turns without ammo before game over
 
     // Global board dimensions
-    extern const int BOARD_HEIGHT;
-    extern const int BOARD_WIDTH;
+    extern int BOARD_HEIGHT;
+    extern int BOARD_WIDTH;
 
     // Helper function to check if a character represents a collision
     inline bool isCollision(char c) {

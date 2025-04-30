@@ -25,9 +25,11 @@ private:
         PANIC
     };
     OperationMode mode;
+    Tank* tank;
     vector<Point> pathToEnemy;
     vector<Point> tilesToAvoid;
-    Tank *tank;
+    bool isMovingBackward = false;
+    int backwardMoveTurnsLeft = 0;
 public:
     AlgorithmPlayerTwo(int playerId, GameBoard* gameBoard);
     ~AlgorithmPlayerTwo() override;

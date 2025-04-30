@@ -54,7 +54,7 @@ public:
     bool getIsTankAlive() const { return isTankAlive; }
     void killTank() { isTankAlive = false; }
     void decreaseShootingCooldown();
-    int getShootingCooldown();
+    int getShootingCooldown() const;
     int getAmmoCount() const { return ammoCount; }
     void doNothing();
 };

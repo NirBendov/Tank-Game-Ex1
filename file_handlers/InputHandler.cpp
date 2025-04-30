@@ -42,9 +42,9 @@ std::vector<std::vector<char>> process(const std::string& fileName) {
 
     cout << "Parsing dimensions..." << endl;
     std::array<int, 2> d = dims(s);
-    const int BOARD_HEIGHT = d[0];
-    const int BOARD_WIDTH = d[1];
-    std::cout << "Board dimensions: " << BOARD_HEIGHT << "x" << BOARD_WIDTH << std::endl;
+    BoardConstants::BOARD_HEIGHT = d[0];
+    BoardConstants::BOARD_WIDTH = d[1];
+    std::cout << "Board dimensions: " << BoardConstants::BOARD_HEIGHT << "x" << BoardConstants::BOARD_WIDTH << std::endl;
     
     std::vector<std::vector<char>> board;
     int player1_count = 0;

@@ -24,8 +24,8 @@ bool GameBoard::isWall(int x, int y) const {
     return board[x][y] == WALL || board[x][y] == DAMAGED_WALL;
 }
 
-GameBoard::GameBoard(const vector<vector<char>>& initialBoard) 
-    : board(initialBoard), gameOver(false), winner(0) {
+GameBoard::GameBoard(const vector<vector<char>>& initialBoard, int maxSteps) 
+    : board(initialBoard), gameOver(false), winner(0), maxStepCount(maxSteps) {
     height = board.size();
     width = board[0].size();
 
@@ -69,6 +69,11 @@ bool GameBoard::validateMove(const Action& action, int playerId) {
     // Get the tank that's trying to move
     const Tank& targetTank = action.target();
     const auto& tankLocation = targetTank.getInfo().location;
+    
+    // Check if the tank is dead
+    if (!targetTank.getIsTankAlive()) {
+        return false;
+    }
     
     // Check if the tank belongs to the player
     auto& playerTanks = getPlayerTanks(playerId);
@@ -331,15 +336,7 @@ void GameBoard::performActions() {
                     break;
                 }
                 // Calculate new position
-                array<int,2> newLocation = location;
-                newLocation[0] += tankInfo.dir[0];
-                newLocation[1] += tankInfo.dir[1];
-                
-                // Handle wrap-around
-                if (newLocation[0] < 0) newLocation[0] = BOARD_WIDTH - 1;
-                if (newLocation[0] >= BOARD_WIDTH) newLocation[0] = 0;
-                if (newLocation[1] < 0) newLocation[1] = BOARD_HEIGHT - 1;
-                if (newLocation[1] >= BOARD_HEIGHT) newLocation[1] = 0;
+                array<int,2> newLocation = actualTank->potentialMove();
 
                 // Check what's in the new position
                 char newPosChar = board[newLocation[0]][newLocation[1]];
@@ -368,8 +365,10 @@ void GameBoard::performActions() {
                         board[location[0]][location[1]] = handleMultipleTanksPosition(location[0], location[1]);
                         board[newLocation[0]][newLocation[1]] = calculateNewPositionCharForTank(newLocation[0], newLocation[1], actualTank->getPlayerId());
                     }
+                } else if (newPosChar == BoardConstants::WALL || newPosChar == BoardConstants::DAMAGED_WALL){
+                    //Do not move tank
                 } else {
-                    // Empty space, proceed with move
+                    // Empty space or mine, proceed with move
                     actualTank->move();
                     board[location[0]][location[1]] = handleMultipleTanksPosition(location[0], location[1]);
                     board[newLocation[0]][newLocation[1]] = calculateNewPositionCharForTank(newLocation[0], newLocation[1], actualTank->getPlayerId());
@@ -387,15 +386,7 @@ void GameBoard::performActions() {
                 }
                 actualTank->setFinishedMoveBackward();
                 // Calculate new position
-                array<int,2> newLocation = location;
-                newLocation[0] -= tankInfo.dir[0];
-                newLocation[1] -= tankInfo.dir[1];
-                
-                // Handle wrap-around
-                if (newLocation[0] < 0) newLocation[0] = BOARD_WIDTH - 1;
-                if (newLocation[0] >= BOARD_WIDTH) newLocation[0] = 0;
-                if (newLocation[1] < 0) newLocation[1] = BOARD_HEIGHT - 1;
-                if (newLocation[1] >= BOARD_HEIGHT) newLocation[1] = 0;
+                array<int,2> newLocation = actualTank->potentialMove();
 
                 // Check what's in the new position
                 char newPosChar = board[newLocation[0]][newLocation[1]];
@@ -423,8 +414,10 @@ void GameBoard::performActions() {
                         board[location[0]][location[1]] = handleMultipleTanksPosition(location[0], location[1]);
                         board[newLocation[0]][newLocation[1]] = calculateNewPositionCharForTank(newLocation[0], newLocation[1], actualTank->getPlayerId());
                     }
+                } else if (newPosChar == BoardConstants::WALL || newPosChar == BoardConstants::DAMAGED_WALL){
+                    //Do not move tank
                 } else {
-                    // Empty space, proceed with move
+                    // Empty space or mine, proceed with move
                     actualTank->move();
                     board[location[0]][location[1]] = handleMultipleTanksPosition(location[0], location[1]);
                     board[newLocation[0]][newLocation[1]] = calculateNewPositionCharForTank(newLocation[0], newLocation[1], actualTank->getPlayerId());
@@ -647,6 +640,7 @@ void GameBoard::moveTankBack(int x, int y) {
         if (location[0] == x && location[1] == y) {
             tank.moveBack();
             const auto& prevPos = tank.getPrevPosition();
+            std::cout << "Moving tank back to position (" << prevPos[0] << "," << prevPos[1] << ")" << std::endl;
             board[prevPos[0]][prevPos[1]] = calculateNewPositionCharForTank(prevPos[0], prevPos[1], tank.getPlayerId());
             backwardMoves.push_back({prevPos[0], prevPos[1]});
         }
@@ -822,46 +816,39 @@ void GameBoard::handleCollisions() {
             handleCollision(pos.first, pos.second, currentChar);
         }
     }
-    
-    // Clean up dead tanks
-    player1Tanks.erase(
-        std::remove_if(player1Tanks.begin(), player1Tanks.end(),
-            [](const Tank& tank) { return !tank.getIsTankAlive(); }),
-        player1Tanks.end()
-    );
-    player2Tanks.erase(
-        std::remove_if(player2Tanks.begin(), player2Tanks.end(),
-            [](const Tank& tank) { return !tank.getIsTankAlive(); }),
-        player2Tanks.end()
-    );
-
-    std::cout << "Tanks after cleanup: P1=" << player1Tanks.size() << " P2=" << player2Tanks.size() << std::endl;
-
     // Check if game is over after handling collisions
     checkGameOver();
 }
 
 void GameBoard::executeStep() {
-    std::cout << "Executing game step..." << std::endl;
+    static int stepCount = 0;
+    stepCount++;
     
-    // Only process shells if there are any
-    if (!bulletsPositions.empty()) {
-        for (int i = 0; i < 2; ++i) {
+    std::cout << "Executing game step " << stepCount << "..." << std::endl;
+    
+    // Check if we've exceeded max steps
+    if (stepCount > maxStepCount) {
+        std::cout << "Game ended due to exceeding " << maxStepCount << " steps" << std::endl;
+        gameOver = true;
+        winner = 0; // Tie game
+        return;
+    }
+    
+    for (int i = 0; i < 2; ++i) {
+        if (!bulletsPositions.empty()) {
             moveShells();
-            std::cout << "Shells moved" << (i == 0 ? "" : " again") << std::endl;
+            std::cout << "Shells moved" << (i == 0 ? "first time" : " second time") << std::endl;
             handleCollisions();
             if (gameOver) {
                 std::cout << "Game over" << std::endl;
                 return;
             }
-            std::cout << "Collisions handled" << (i == 0 ? "" : " again") << std::endl;
+            std::cout << "Collisions handled for shells" << std::endl;
         }
-        updateAlgorithmsAfterShells();
-        std::cout << "Collisions handled again" << std::endl;
-    } else {
-        std::cout << "No shells to move" << std::endl;
     }
-    
+    updateAlgorithmsAfterShells();
+    std::cout << "handling shells completed" << std::endl;
+
     performActions();
     std::cout << "Actions performed" << std::endl;
     handleCollisions();
@@ -959,7 +946,7 @@ char GameBoard::handleMultipleTanksPosition(int x, int y) {
     // Check player 1 tanks
     for (const auto& tank : player1Tanks) {
         const auto& location = tank.getInfo().location;
-        if (location[0] == x && location[1] == y) {
+        if (location[0] == x && location[1] == y && tank.getIsTankAlive()) {
             p1TankCount++;
         }
     }
@@ -967,7 +954,7 @@ char GameBoard::handleMultipleTanksPosition(int x, int y) {
     // Check player 2 tanks
     for (const auto& tank : player2Tanks) {
         const auto& location = tank.getInfo().location;
-        if (location[0] == x && location[1] == y) {
+        if (location[0] == x && location[1] == y && tank.getIsTankAlive()) {
             p2TankCount++;
         }
     }
@@ -1003,6 +990,7 @@ bool GameBoard::checkGameOver() {
     // Check if any player 1 tanks are alive
     for (const auto& tank : player1Tanks) {
         if (tank.getIsTankAlive()) {
+            std::cout << "Player 1 has tanks" << std::endl;
             p1HasTanks = true;
             break;
         }
@@ -1011,6 +999,7 @@ bool GameBoard::checkGameOver() {
     // Check if any player 2 tanks are alive
     for (const auto& tank : player2Tanks) {
         if (tank.getIsTankAlive()) {
+            std::cout << "Player 2 has tanks" << std::endl;
             p2HasTanks = true;
             break;
         }
@@ -1041,18 +1030,38 @@ void GameBoard::printBoard() const {
         std::cout << std::endl;
     }
     std::cout << std::endl;
+
+    // Print ammo counts for each tank
+    std::cout << "Ammo Counts:" << std::endl;
+    for (const auto& tank : player1Tanks) {
+        if (tank.getIsTankAlive()) {
+            const auto& location = tank.getInfo().location;
+            std::cout << "Player 1 tank at (" << location[0] << "," << location[1] << "): " 
+                      << tank.getAmmoCount() << " ammo" << std::endl;
+        }
+    }
+    for (const auto& tank : player2Tanks) {
+        if (tank.getIsTankAlive()) {
+            const auto& location = tank.getInfo().location;
+            std::cout << "Player 2 tank at (" << location[0] << "," << location[1] << "): " 
+                      << tank.getAmmoCount() << " ammo" << std::endl;
+        }
+    }
+    std::cout << std::endl;
 }
 
 void GameBoard::checkNoAmoForTanks() {
     bool tankHasAmmo = false;
     for (auto& tank : player1Tanks) {
-        if (tank.getAmmoCount() == 0) {
+        if (tank.getAmmoCount() > 0) {
             tankHasAmmo = true;
+            break;
         }
     }
     for (auto& tank : player2Tanks) {
-        if (tank.getAmmoCount() == 0) {
+        if (tank.getAmmoCount() > 0) {
             tankHasAmmo = true;
+            break;
         }
     }
     if(!tankHasAmmo){

@@ -16,7 +16,7 @@ using namespace std;
 AlgorithmPlayerTwo::AlgorithmPlayerTwo(int playerId, GameBoard *gameBoard)
     : Algorithm(playerId, gameBoard), mode(OperationMode::CHASE) {
     cout << "Initializing AlgorithmPlayerTwo for player " << playerId << endl;
-    tank = &gameBoard->getPlayerTanks(playerId)[0];
+    tank = &gameBoard->getPlayerTanksNonConst(playerId)[0];
     tank->assignAlgorithm(this);
 
     array<int,2> tankLocation = tank->getInfo().location;
@@ -32,7 +32,7 @@ AlgorithmPlayerTwo::AlgorithmPlayerTwo(int playerId, GameBoard *gameBoard)
 
 AlgorithmPlayerTwo::~AlgorithmPlayerTwo()
 {
-    delete tank;
+    // No need to delete tank since we're using a reference
 }
 
 void AlgorithmPlayerTwo::defaultMode() {
@@ -41,6 +41,7 @@ void AlgorithmPlayerTwo::defaultMode() {
 }
 
 vector<Action> AlgorithmPlayerTwo::decideNextActions() {
+    update();
     cout << "Deciding next actions for tank at (" << tank->getInfo().location[0] << "," << tank->getInfo().location[1] << ")" << endl;
     vector<Action> actions;
     if (mode == OperationMode::PANIC) {

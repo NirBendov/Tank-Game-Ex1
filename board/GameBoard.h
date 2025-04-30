@@ -31,6 +31,7 @@ private:
     vector<Action> stepMoves; // List of moves to execute in the next step
     vector<pair<int, int>> backwardMoves; // Positions where tanks moved back
     int numOfTurnsSinceNoAmmo = 0; // Number of turns since all ammo was used
+    int maxStepCount; // Maximum number of steps before game ends
     bool isWall(int x, int y) const;
     char calculateNewPositionCharForTank(int x, int y, int playerId);
     char calculateNewPositionCharForShell(int x, int y);
@@ -56,7 +57,7 @@ public:
     
     vector<TankDeath> tankDeaths; // List of tank deaths with their positions, player IDs and causes
     
-    GameBoard(const vector<vector<char>>& initialBoard);
+    GameBoard(const vector<vector<char>>& initialBoard, int maxSteps = 100);
     ~GameBoard();
     
     bool validateMove(const Action& action, int playerId);
@@ -68,6 +69,11 @@ public:
     
     // Get tanks for a specific player
     vector<Tank>& getPlayerTanks(int playerId) {
+        return playerId == 1 ? player1Tanks : player2Tanks;
+    }
+
+    // Get non-const access to tanks for a specific player
+    vector<Tank>& getPlayerTanksNonConst(int playerId) {
         return playerId == 1 ? player1Tanks : player2Tanks;
     }
 

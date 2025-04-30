@@ -6,7 +6,7 @@
 
 #include "file_handlers/InputHandler.h"
 #include "board/GameBoard.h"
-#include "algorithms/AlgorithmPlayerOne.h"
+#include "algorithms/AlgorithmBasic.h"
 #include "algorithms/AlgorithmPlayerTwo.h"
 #include "algorithms/Action.h"
 #include "player/Player.h"
@@ -15,13 +15,14 @@ using namespace std;
 namespace fs = std::filesystem;
 
 int main(int argc, char* argv[]) {
-    if (argc != 2) {
-        cerr << "Usage: " << argv[0] << " <input_file>\n";
+    if (argc != 3) {
+        cerr << "Usage: " << argv[0] << " <input_file> <max_steps>\n";
         return 1;
     }
 
     // 1. Read the input filename from argv
     string inputFile = argv[1];
+    int maxSteps = stoi(argv[2]);
 
     // 2. Parse out just the base name (no directory, no extension)
     fs::path inPath{inputFile};
@@ -34,13 +35,13 @@ int main(int argc, char* argv[]) {
     cout << "Processing input file..." << endl;
     vector<vector<char>> initialBoard = process(inputFile);
     cout << "Creating game board..." << endl;
-    GameBoard gameBoard(initialBoard);
+    GameBoard gameBoard(initialBoard, maxSteps);
     cout << "Game board created" << endl;
 
     cout << "Initializing algorithms..." << endl;
     // Example: both players using AlgorithmPlayerTwo
-    AlgorithmPlayerTwo algo1(1, &gameBoard);
-    AlgorithmPlayerTwo algo2(2, &gameBoard);
+    AlgorithmBasic algo1(1, &gameBoard);
+    AlgorithmBasic algo2(2, &gameBoard);
     cout << "Algorithms initialized" << endl;
 
     int step = 0;

@@ -11,9 +11,20 @@ Moveable::Moveable(int lc[2], int d[2])
     info.dir[1]      = d[1];
 }
 
-void Moveable::move()
-{
+std::array<int, 2> Moveable::calculateMove() const {
     using namespace BoardConstants;
+    std::array<int, 2> newLocation = {info.location[0], info.location[1]};
+    
+    // X-axis movement with wrap-around
+    newLocation[0] = (newLocation[0] + info.dir[0] + BOARD_WIDTH) % BOARD_WIDTH;
+
+    // Y-axis movement with wrap-around 
+    newLocation[1] = (newLocation[1] + info.dir[1] + BOARD_HEIGHT) % BOARD_HEIGHT;
+
+    return newLocation;
+}
+
+void Moveable::move() {
     // Store the previous position
     prevPosition[0] = info.location[0];
     prevPosition[1] = info.location[1];
@@ -21,24 +32,17 @@ void Moveable::move()
     // Print movement information
     std::cout << "Moving from (" << prevPosition[0] << "," << prevPosition[1] << ") to (";
     
-    // X-axis movement with wrap-around
-    info.location[0] += info.dir[0];
-    if (info.location[0] < 0) {
-        info.location[0] = BOARD_WIDTH - 1;
-    } else if (info.location[0] >= BOARD_WIDTH) {
-        info.location[0] = 0;
-    }
-
-    // Y-axis movement with wrap-around
-    info.location[1] += info.dir[1];
-    if (info.location[1] < 0) {
-        info.location[1] = BOARD_HEIGHT - 1;
-    } else if (info.location[1] >= BOARD_HEIGHT) {
-        info.location[1] = 0;
-    }
+    // Calculate and apply new position
+    std::array<int, 2> newLocation = calculateMove();
+    info.location[0] = newLocation[0];
+    info.location[1] = newLocation[1];
     
     // Complete the movement print
     std::cout << info.location[0] << "," << info.location[1] << ")" << std::endl;
+}
+
+std::array<int, 2> Moveable::potentialMove() const {
+    return calculateMove();
 }
 
 void Moveable::moveBack() {
