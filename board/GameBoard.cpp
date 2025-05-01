@@ -14,6 +14,10 @@
 using namespace std;
 using namespace BoardConstants;
 
+// Direction constants
+constexpr int RIGHT_DIRECTION[2] = {0, 1};
+constexpr int LEFT_DIRECTION[2] = {0, -1};
+
 // Constants for board elements
 
 bool GameBoard::isWall(int x, int y) const {
@@ -45,15 +49,13 @@ GameBoard::GameBoard(const vector<vector<char>>& initialBoard, int maxSteps)
             if (board[i][j] == PLAYER1_TANK) {
                 cout << "Found player 1 tank at (" << i << "," << j << ")" << endl;
                 int location[2] = {i, j};
-                int direction[2] = {0, 1}; // Default direction: right
-                Tank tank(location, direction);
+                Tank tank(location, const_cast<int*>(RIGHT_DIRECTION));
                 tank.assignPlayerId(1);
                 player1Tanks.push_back(tank);
             } else if (board[i][j] == PLAYER2_TANK) {
                 cout << "Found player 2 tank at (" << i << "," << j << ")" << endl;
                 int location[2] = {i, j};
-                int direction[2] = {0, -1}; // Default direction: left
-                Tank tank(location, direction);
+                Tank tank(location, const_cast<int*>(LEFT_DIRECTION));
                 tank.assignPlayerId(2);
                 player2Tanks.push_back(tank);
             }
@@ -61,9 +63,6 @@ GameBoard::GameBoard(const vector<vector<char>>& initialBoard, int maxSteps)
     }
 
     cout << "Initialized " << player1Tanks.size() << " player 1 tanks and " << player2Tanks.size() << " player 2 tanks" << endl;
-}
-
-GameBoard::~GameBoard() {
 }
 
 bool GameBoard::validateMove(const Action& action, int playerId) {
@@ -152,58 +151,58 @@ char GameBoard::calculateNewPositionCharForTank(int x, int y, int playerId) {
     
     // Check for collisions with different board elements
     switch (prevChar) {
-        case BoardConstants::EMPTY_SPACE:
+        case EMPTY_SPACE:
             if(playerId == 1){
-                return BoardConstants::PLAYER1_TANK; // Default to player 1 tank if empty
+                return PLAYER1_TANK; // Default to player 1 tank if empty
             } else {
-                return BoardConstants::PLAYER2_TANK; // Default to player 2 tank if empty
+                return PLAYER2_TANK; // Default to player 2 tank if empty
             }
             
-        case BoardConstants::PLAYER1_TANK:
-        case BoardConstants::PLAYER2_TANK:
-            return BoardConstants::MULTIPLE_TANKS; // Multiple tanks collision
+        case PLAYER1_TANK:
+        case PLAYER2_TANK:
+            return MULTIPLE_TANKS; // Multiple tanks collision
             
-        case BoardConstants::WALL:
-            return BoardConstants::WALL_AND_TANK; // Wall + Tank collision
+        case WALL:
+            return WALL_AND_TANK; // Wall + Tank collision
             
-        case BoardConstants::DAMAGED_WALL:
-            return BoardConstants::DAMAGED_WALL_AND_TANK; // Damaged Wall + Tank collision
+        case DAMAGED_WALL:
+            return DAMAGED_WALL_AND_TANK; // Damaged Wall + Tank collision
             
-        case BoardConstants::MINE:
-            return BoardConstants::MINE_AND_TANK; // Mine + Tank collision
+        case MINE:
+            return MINE_AND_TANK; // Mine + Tank collision
             
-        case BoardConstants::SHELL:
-            return BoardConstants::SHELL_AND_TANK; // Shell + Tank collision
+        case SHELL:
+            return SHELL_AND_TANK; // Shell + Tank collision
         
-        case BoardConstants::SHELL_AND_TANK:
-            return BoardConstants::MULTIPLE_TANKS_AND_SHELL; // Shell + multiple tanks
+        case SHELL_AND_TANK:
+            return MULTIPLE_TANKS_AND_SHELL; // Shell + multiple tanks
 
-        case BoardConstants::WALL_AND_SHELL:
-            return BoardConstants::WALL_SHELL_AND_TANK; // Wall + Shell + Tank collision
+        case WALL_AND_SHELL:
+            return WALL_SHELL_AND_TANK; // Wall + Shell + Tank collision
             
-        case BoardConstants::DAMAGED_WALL_AND_SHELL:
-            return BoardConstants::DAMAGED_WALL_SHELL_AND_TANK; // Damaged Wall + Shell + Tank collision
+        case DAMAGED_WALL_AND_SHELL:
+            return DAMAGED_WALL_SHELL_AND_TANK; // Damaged Wall + Shell + Tank collision
             
-        case BoardConstants::MINE_AND_SHELL:
-            return BoardConstants::MINE_SHELL_AND_TANK; // Mine + Shell + Tank collision
+        case MINE_AND_SHELL:
+            return MINE_SHELL_AND_TANK; // Mine + Shell + Tank collision
             
-        case BoardConstants::MULTIPLE_TANKS:
-            return BoardConstants::MULTIPLE_TANKS; // Multiple tanks collision (already multiple tanks)
+        case MULTIPLE_TANKS:
+            return MULTIPLE_TANKS; // Multiple tanks collision (already multiple tanks)
             
-        case BoardConstants::MULTIPLE_TANKS_AND_SHELL:
-            return BoardConstants::MULTIPLE_TANKS_AND_SHELL; // Multiple tanks + Shell collision
+        case MULTIPLE_TANKS_AND_SHELL:
+            return MULTIPLE_TANKS_AND_SHELL; // Multiple tanks + Shell collision
             
-        case BoardConstants::SHELL_AND_SHELL:
-            return BoardConstants::SHELL_AND_TANK; // Multiple shells + Tank collision
+        case SHELL_AND_SHELL:
+            return SHELL_AND_TANK; // Multiple shells + Tank collision
             
-        case BoardConstants::WALL_SHELL_AND_TANK:
-            return BoardConstants::WALL_SHELL_AND_TANK; // Wall + Shell + Tank collision (already has tank)
+        case WALL_SHELL_AND_TANK:
+            return WALL_SHELL_AND_TANK; // Wall + Shell + Tank collision (already has tank)
             
-        case BoardConstants::DAMAGED_WALL_SHELL_AND_TANK:
-            return BoardConstants::DAMAGED_WALL_SHELL_AND_TANK; // Damaged Wall + Shell + Tank collision (already has tank)
+        case DAMAGED_WALL_SHELL_AND_TANK:
+            return DAMAGED_WALL_SHELL_AND_TANK; // Damaged Wall + Shell + Tank collision (already has tank)
             
-        case BoardConstants::MINE_SHELL_AND_TANK:
-            return BoardConstants::MINE_SHELL_AND_TANK; // Mine + Shell + Tank collision (already has tank)
+        case MINE_SHELL_AND_TANK:
+            return MINE_SHELL_AND_TANK; // Mine + Shell + Tank collision (already has tank)
             
         default:
             std::cout << "Warning: Unexpected board character encountered: " << prevChar << std::endl;
@@ -216,60 +215,60 @@ char GameBoard::calculateNewPositionCharForShell(int x, int y) {
     
     // Check for collisions with different board elements
     switch (prevChar) {
-        case BoardConstants::EMPTY_SPACE:
-            return BoardConstants::SHELL; // Shell in empty space
+        case EMPTY_SPACE:
+            return SHELL; // Shell in empty space
             
-        case BoardConstants::WALL:
-            return BoardConstants::WALL_AND_SHELL; // Wall + Shell collision
+        case WALL:
+            return WALL_AND_SHELL; // Wall + Shell collision
             
-        case BoardConstants::DAMAGED_WALL:
-            return BoardConstants::DAMAGED_WALL_AND_SHELL; // Damaged Wall + Shell collision
+        case DAMAGED_WALL:
+            return DAMAGED_WALL_AND_SHELL; // Damaged Wall + Shell collision
             
-        case BoardConstants::MINE:
-            return BoardConstants::MINE_AND_SHELL; // Mine + Shell collision
+        case MINE:
+            return MINE_AND_SHELL; // Mine + Shell collision
         
-        case BoardConstants::PLAYER1_TANK:
-        case BoardConstants::PLAYER2_TANK:
-            return BoardConstants::SHELL_AND_TANK; // Shell + Tank collision
+        case PLAYER1_TANK:
+        case PLAYER2_TANK:
+            return SHELL_AND_TANK; // Shell + Tank collision
             
-        case BoardConstants::WALL_AND_TANK:
-            return BoardConstants::WALL_SHELL_AND_TANK; // Wall + Shell + Tank collision
+        case WALL_AND_TANK:
+            return WALL_SHELL_AND_TANK; // Wall + Shell + Tank collision
             
-        case BoardConstants::DAMAGED_WALL_AND_TANK:
-            return BoardConstants::DAMAGED_WALL_SHELL_AND_TANK; // Damaged Wall + Shell + Tank collision
+        case DAMAGED_WALL_AND_TANK:
+            return DAMAGED_WALL_SHELL_AND_TANK; // Damaged Wall + Shell + Tank collision
             
-        case BoardConstants::MINE_AND_TANK:
-            return BoardConstants::MINE_SHELL_AND_TANK; // Mine + Shell + Tank collision
+        case MINE_AND_TANK:
+            return MINE_SHELL_AND_TANK; // Mine + Shell + Tank collision
             
-        case BoardConstants::MULTIPLE_TANKS:
-            return BoardConstants::MULTIPLE_TANKS_AND_SHELL; // Multiple Tanks + Shell collision
+        case MULTIPLE_TANKS:
+            return MULTIPLE_TANKS_AND_SHELL; // Multiple Tanks + Shell collision
             
-        case BoardConstants::SHELL:
-            return BoardConstants::SHELL_AND_SHELL; // Shell + Shell collision
+        case SHELL:
+            return SHELL_AND_SHELL; // Shell + Shell collision
             
-        case BoardConstants::WALL_AND_SHELL:
-            return BoardConstants::WALL_AND_SHELL; // Wall + Shell (already has shell)
+        case WALL_AND_SHELL:
+            return WALL_AND_SHELL; // Wall + Shell (already has shell)
             
-        case BoardConstants::DAMAGED_WALL_AND_SHELL:
-            return BoardConstants::DAMAGED_WALL_AND_SHELL; // Damaged Wall + Shell (already has shell)
+        case DAMAGED_WALL_AND_SHELL:
+            return DAMAGED_WALL_AND_SHELL; // Damaged Wall + Shell (already has shell)
             
-        case BoardConstants::MINE_AND_SHELL:
-            return BoardConstants::MINE_AND_SHELL; // Mine + Shell (already has shell)
+        case MINE_AND_SHELL:
+            return MINE_AND_SHELL; // Mine + Shell (already has shell)
             
-        case BoardConstants::WALL_SHELL_AND_TANK:
-            return BoardConstants::WALL_SHELL_AND_TANK; // Wall + Shell + Tank (already has shell)
+        case WALL_SHELL_AND_TANK:
+            return WALL_SHELL_AND_TANK; // Wall + Shell + Tank (already has shell)
             
-        case BoardConstants::DAMAGED_WALL_SHELL_AND_TANK:
-            return BoardConstants::DAMAGED_WALL_SHELL_AND_TANK; // Damaged Wall + Shell + Tank (already has shell)
+        case DAMAGED_WALL_SHELL_AND_TANK:
+            return DAMAGED_WALL_SHELL_AND_TANK; // Damaged Wall + Shell + Tank (already has shell)
             
-        case BoardConstants::MINE_SHELL_AND_TANK:
-            return BoardConstants::MINE_SHELL_AND_TANK; // Mine + Shell + Tank (already has shell)
+        case MINE_SHELL_AND_TANK:
+            return MINE_SHELL_AND_TANK; // Mine + Shell + Tank (already has shell)
             
-        case BoardConstants::SHELL_AND_SHELL:
-            return BoardConstants::SHELL_AND_SHELL; // Multiple Shells (already has shell)
+        case SHELL_AND_SHELL:
+            return SHELL_AND_SHELL; // Multiple Shells (already has shell)
             
-        case BoardConstants::MULTIPLE_TANKS_AND_SHELL:
-            return BoardConstants::MULTIPLE_TANKS_AND_SHELL; // Multiple Tanks + Shell (already has shell)
+        case MULTIPLE_TANKS_AND_SHELL:
+            return MULTIPLE_TANKS_AND_SHELL; // Multiple Tanks + Shell (already has shell)
             
         default:
             std::cout << "Warning: Unexpected board character encountered for shell: " << prevChar << std::endl;
@@ -339,8 +338,8 @@ void GameBoard::performActions() {
                 // Check what's in the new position
                 char newPosChar = board[newLocation[0]][newLocation[1]];
                 
-                if (newPosChar == BoardConstants::PLAYER1_TANK || 
-                          newPosChar == BoardConstants::PLAYER2_TANK || newPosChar == BoardConstants::MULTIPLE_TANKS) {
+                if (newPosChar == PLAYER1_TANK || 
+                          newPosChar == PLAYER2_TANK || newPosChar == MULTIPLE_TANKS) {
                     // Check if the tank in that position has a pending move
                     bool shouldSkip = false;
                     for (size_t j = 0; j < stepMoves.size(); j++) {
@@ -363,7 +362,7 @@ void GameBoard::performActions() {
                         board[location[0]][location[1]] = handleMultipleTanksPosition(location[0], location[1]);
                         board[newLocation[0]][newLocation[1]] = calculateNewPositionCharForTank(newLocation[0], newLocation[1], actualTank->getPlayerId());
                     }
-                } else if (newPosChar == BoardConstants::WALL || newPosChar == BoardConstants::DAMAGED_WALL){
+                } else if (newPosChar == WALL || newPosChar == DAMAGED_WALL){
                     //Do not move tank
                 } else {
                     // Empty space or mine, proceed with move
@@ -389,7 +388,7 @@ void GameBoard::performActions() {
                 // Check what's in the new position
                 char newPosChar = board[newLocation[0]][newLocation[1]];
                 
-                if (newPosChar == BoardConstants::PLAYER1_TANK || newPosChar == BoardConstants::PLAYER2_TANK) {
+                if (newPosChar == PLAYER1_TANK || newPosChar == PLAYER2_TANK) {
                     // Check if the tank in that position has a pending move
                     bool shouldSkip = false;
                     for (size_t j = 0; j < stepMoves.size(); j++) {
@@ -412,7 +411,7 @@ void GameBoard::performActions() {
                         board[location[0]][location[1]] = handleMultipleTanksPosition(location[0], location[1]);
                         board[newLocation[0]][newLocation[1]] = calculateNewPositionCharForTank(newLocation[0], newLocation[1], actualTank->getPlayerId());
                     }
-                } else if (newPosChar == BoardConstants::WALL || newPosChar == BoardConstants::DAMAGED_WALL){
+                } else if (newPosChar == WALL || newPosChar == DAMAGED_WALL){
                     //Do not move tank
                 } else {
                     // Empty space or mine, proceed with move
@@ -501,12 +500,12 @@ void GameBoard::moveShells() {
                     shellsToKeep[j] = false;
                     // Handle shell1
                     if (!shell1.getJustFired()) {
-                        board[loc1[0]][loc1[1]] = BoardConstants::EMPTY_SPACE;
+                        board[loc1[0]][loc1[1]] = EMPTY_SPACE;
                     }
                     
                     // Handle shell2
                     if (!shell2.getJustFired()) {
-                        board[loc2[0]][loc2[1]] = BoardConstants::EMPTY_SPACE;
+                        board[loc2[0]][loc2[1]] = EMPTY_SPACE;
                     }
                 }
             }
@@ -535,25 +534,25 @@ void GameBoard::moveShells() {
         if (!isShellAtPosition(prevX, prevY)) {
             char prevChar = board[prevX][prevY];
             switch (prevChar) {
-                case BoardConstants::MINE_AND_SHELL:
-                    board[prevX][prevY] = BoardConstants::MINE;
+                case MINE_AND_SHELL:
+                    board[prevX][prevY] = MINE;
                     break;
                     
-                case BoardConstants::MINE_SHELL_AND_TANK:
-                    board[prevX][prevY] = BoardConstants::MINE_AND_TANK;
+                case MINE_SHELL_AND_TANK:
+                    board[prevX][prevY] = MINE_AND_TANK;
                     break;
                     
-                case BoardConstants::SHELL_AND_TANK:
+                case SHELL_AND_TANK:
                     // Shell and single tank case - change to just the tank
                     board[prevX][prevY] = handleMultipleTanksPosition(prevX, prevY);
                     break;
                     
-                case BoardConstants::MULTIPLE_TANKS_AND_SHELL:
+                case MULTIPLE_TANKS_AND_SHELL:
                     // Multiple tanks and shell case - change to multiple tanks
-                    board[prevX][prevY] = BoardConstants::MULTIPLE_TANKS;
+                    board[prevX][prevY] = MULTIPLE_TANKS;
                     break;
                     
-                case BoardConstants::SHELL_AND_SHELL:
+                case SHELL_AND_SHELL:
                     // Shell collisions case - check if there are still shells
                     {
                         int shellCount = 0;
@@ -565,24 +564,24 @@ void GameBoard::moveShells() {
                                 shellCount++;
                             }
                         }
-                        board[prevX][prevY] = (shellCount > 1) ? BoardConstants::SHELL_AND_SHELL : BoardConstants::SHELL;
+                        board[prevX][prevY] = (shellCount > 1) ? SHELL_AND_SHELL : SHELL;
                     }
                     break;
-                case BoardConstants::PLAYER1_TANK:
+                case PLAYER1_TANK:
                     if(shell.getJustFired()){
-                        board[prevX][prevY] = BoardConstants::PLAYER1_TANK;
+                        board[prevX][prevY] = PLAYER1_TANK;
                         shell.setJustFired(false);
                     }
                     break;
-                case BoardConstants::PLAYER2_TANK:
+                case PLAYER2_TANK:
                     if(shell.getJustFired()){
-                        board[prevX][prevY] = BoardConstants::PLAYER2_TANK;
+                        board[prevX][prevY] = PLAYER2_TANK;
                         shell.setJustFired(false);
                     }
                     break;
                 default:
                     // For any other case, set to empty space
-                    board[prevX][prevY] = BoardConstants::EMPTY_SPACE;
+                    board[prevX][prevY] = EMPTY_SPACE;
                     break;
             }
             shell.setJustFired(false);
@@ -666,76 +665,75 @@ int GameBoard::countShellsAtPosition(int x, int y) const {
     return count;
 }
 
+void GameBoard::clearPosition(int x, int y, const string& cause) {
+    killTanksAtPosition(x, y, cause);
+    removeBulletsAtPosition(x, y);
+    board[x][y] = EMPTY_SPACE;
+}
+
 void GameBoard::handleCollision(int i, int j, char currentChar) {
     switch (currentChar) {
-        case BoardConstants::MULTIPLE_TANKS: {
+        case MULTIPLE_TANKS: {
             // Case 1: Multiple tanks - everything dies/disappears
-            killTanksAtPosition(i, j, "Multiple tanks collision");
-            board[i][j] = BoardConstants::EMPTY_SPACE;
+            clearPosition(i, j, "Multiple tanks collision");
             break;
         }
         
-        case BoardConstants::WALL_AND_TANK:
-        case BoardConstants::DAMAGED_WALL_AND_TANK: {
+        case WALL_AND_TANK:
+        case DAMAGED_WALL_AND_TANK: {
             // Case 2: Wall/Damaged Wall and Tank - move tank back
             moveTankBack(i, j);
-            board[i][j] = (currentChar == BoardConstants::WALL_AND_TANK) ? BoardConstants::WALL : BoardConstants::DAMAGED_WALL;
+            board[i][j] = (currentChar == WALL_AND_TANK) ? WALL : DAMAGED_WALL;
             break;
         }
         
-        case BoardConstants::SHELL_AND_SHELL: {
+        case SHELL_AND_SHELL: {
             // Case 3: Shell collision - both disappear
-            removeBulletsAtPosition(i, j);
-            board[i][j] = BoardConstants::EMPTY_SPACE;
+            clearPosition(i, j, "Shell collision");
             break;
         }
         
-        case BoardConstants::SHELL_AND_TANK:
-        case BoardConstants::MULTIPLE_TANKS_AND_SHELL: {
+        case SHELL_AND_TANK:
+        case MULTIPLE_TANKS_AND_SHELL: {
             // Case 4: Shell and Tank - everything disappears
-            killTanksAtPosition(i, j, "Shell hit");
-            removeBulletsAtPosition(i, j);
-            board[i][j] = BoardConstants::EMPTY_SPACE;
+            clearPosition(i, j, "Shell hit");
             break;
         }
         
-        case BoardConstants::MINE_AND_TANK: {
+        case MINE_AND_TANK: {
             // Case 5: Mine and Tank - tank dies, mine disappears
-            killTanksAtPosition(i, j, "Mine explosion");
-            board[i][j] = BoardConstants::EMPTY_SPACE;
+            clearPosition(i, j, "Mine explosion");
             break;
         }
         
-        case BoardConstants::WALL_AND_SHELL: {
+        case WALL_AND_SHELL: {
             // Case 6: Wall and Shell
             int shellCount = countShellsAtPosition(i, j);
             
             if (shellCount > 1) {
                 // More than one shell - everything disappears
-                board[i][j] = BoardConstants::EMPTY_SPACE;
+                clearPosition(i, j, "Multiple shells hit wall");
             } else {
                 // One shell - wall becomes damaged
-                board[i][j] = BoardConstants::DAMAGED_WALL;
+                board[i][j] = DAMAGED_WALL;
             }
             removeBulletsAtPosition(i, j);
             break;
         }
         
-        case BoardConstants::DAMAGED_WALL_AND_SHELL: {
+        case DAMAGED_WALL_AND_SHELL: {
             // Case 7: Damaged Wall and Shell - both disappear
-            removeBulletsAtPosition(i, j);
-            board[i][j] = BoardConstants::EMPTY_SPACE;
+            clearPosition(i, j, "Shell hit damaged wall");
             break;
         }
         
-        case BoardConstants::DAMAGED_WALL_SHELL_AND_TANK: {
+        case DAMAGED_WALL_SHELL_AND_TANK: {
             // Case 8: Damaged Wall, Shell, and Tank
             int shellCount = countShellsAtPosition(i, j);
             
             if (shellCount > 1) {
                 // More than one shell - everything dies/disappears
-                killTanksAtPosition(i, j, "Multiple shells hit");
-                board[i][j] = BoardConstants::EMPTY_SPACE;
+                clearPosition(i, j, "Multiple shells hit");
             } else {
                 // One shell - calculate appropriate tank character
                 board[i][j] = handleMultipleTanksPosition(i, j);
@@ -744,47 +742,43 @@ void GameBoard::handleCollision(int i, int j, char currentChar) {
             break;
         }
         
-        case BoardConstants::WALL_SHELL_AND_TANK: {
+        case WALL_SHELL_AND_TANK: {
             // Case 9: Wall, Shell, and Tank
             int shellCount = countShellsAtPosition(i, j);
             
             if (shellCount == 1) {
                 // One shell - move tank back to previous position and wall becomes damaged
                 moveTankBack(i, j);
-                board[i][j] = BoardConstants::DAMAGED_WALL;
+                board[i][j] = DAMAGED_WALL;
             } else if (shellCount == 2) {
                 // Two shells - shells disappear, tank stays
                 board[i][j] = handleMultipleTanksPosition(i, j);
-                if(board[i][j] == BoardConstants::MULTIPLE_TANKS){
-                    killTanksAtPosition(i, j, "Multiple tanks collision");
-                    board[i][j] = BoardConstants::EMPTY_SPACE;
+                if(board[i][j] == MULTIPLE_TANKS){
+                    clearPosition(i, j, "Multiple tanks collision");
                 }
             } else {
                 // More than two shells or multiple tanks - everything dies/disappears
-                killTanksAtPosition(i, j, "Multiple shells hit");
-                board[i][j] = BoardConstants::EMPTY_SPACE;
+                clearPosition(i, j, "Multiple shells hit");
             }
             removeBulletsAtPosition(i, j);
             break;
         }
         
-        case BoardConstants::MINE_AND_SHELL: {
+        case MINE_AND_SHELL: {
             // Case 13: Mine and Shell - stays the same
             break;
         }
         
-        case BoardConstants::MINE_SHELL_AND_TANK: {
+        case MINE_SHELL_AND_TANK: {
             // Case 12: Mine, Shell, and Tank - kill tanks, remove shells, set to empty
-            killTanksAtPosition(i, j, "Mine explosion with shell");
-            removeBulletsAtPosition(i, j);
-            board[i][j] = BoardConstants::EMPTY_SPACE;
+            clearPosition(i, j, "Mine explosion with shell");
             break;
         }
         
         default:
             // For any other collision character, set to empty space
-            if (BoardConstants::isCollision(currentChar)) {
-                board[i][j] = BoardConstants::EMPTY_SPACE;
+            if (isCollision(currentChar)) {
+                clearPosition(i, j, "Unknown collision");
             }
             break;
     }
@@ -799,7 +793,7 @@ void GameBoard::handleCollisions() {
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
             char currentChar = board[i][j];
-            if (BoardConstants::isCollision(currentChar)) {
+            if (isCollision(currentChar)) {
                 std::cout << "Handling collision at (" << i << "," << j << "): " << currentChar << std::endl;
                 handleCollision(i, j, currentChar);
             }
@@ -809,7 +803,7 @@ void GameBoard::handleCollisions() {
     // Second pass: handle backward moves
     for (const auto& pos : backwardMoves) {
         char currentChar = board[pos.first][pos.second];
-        if (BoardConstants::isCollision(currentChar)) {
+        if (isCollision(currentChar)) {
             std::cout << "Handling backward move collision at (" << pos.first << "," << pos.second << ")" << std::endl;
             handleCollision(pos.first, pos.second, currentChar);
         }
@@ -962,23 +956,23 @@ char GameBoard::handleMultipleTanksPosition(int x, int y) {
     
     // If there's still more than one tank
     if ((p1TankCount + p2TankCount) > 1) {
-        return hasShell ? BoardConstants::MULTIPLE_TANKS_AND_SHELL : BoardConstants::MULTIPLE_TANKS;
+        return hasShell ? MULTIPLE_TANKS_AND_SHELL : MULTIPLE_TANKS;
     }
     
     // If only one tank remains
     if (p1TankCount == 1) {
-        return hasShell ? BoardConstants::SHELL_AND_TANK : BoardConstants::PLAYER1_TANK;
+        return hasShell ? SHELL_AND_TANK : PLAYER1_TANK;
     } else if (p2TankCount == 1) {
-        return hasShell ? BoardConstants::SHELL_AND_TANK : BoardConstants::PLAYER2_TANK;
+        return hasShell ? SHELL_AND_TANK : PLAYER2_TANK;
     }
     
     // If no tanks remain but there's a shell
     if (hasShell) {
-        return BoardConstants::SHELL;
+        return SHELL;
     }
     
     // If nothing remains
-    return BoardConstants::EMPTY_SPACE;
+    return EMPTY_SPACE;
 }
 
 bool GameBoard::checkGameOver() {
@@ -1065,7 +1059,7 @@ void GameBoard::checkNoAmoForTanks() {
     if(!tankHasAmmo){
         numOfTurnsSinceNoAmmo++;
     }
-    if(numOfTurnsSinceNoAmmo >= BoardConstants::NO_AMMO_TURNS){
+    if(numOfTurnsSinceNoAmmo >= NO_AMMO_TURNS){
         gameOver = true;
         winner = 0; // 0 represents a tie
     }

@@ -48,6 +48,7 @@ private:
     bool checkGameOver(); // Check if game is over and set winner
     void checkNoAmoForTanks(); // Check if all tanks are out of ammo
     void updateAlgorithmsAfterShells(); // If any algorithm needs to update some data about moving shells
+    void clearPosition(int x, int y, const string& cause);
 public:
     typedef struct {
         pair<int, int> position;
