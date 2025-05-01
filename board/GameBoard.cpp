@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <algorithm>
+#include <memory>
 #include "GameBoard.h"
 #include "../game_objects/Tank.h"
 #include "../game_objects/Shell.h"
@@ -319,13 +320,10 @@ void GameBoard::performActions() {
             case Action::Type::SHOOT: {
                 std::cout << "Executing SHOOT action" << std::endl;
                 // Create a new shell
-                Shell* shell = actualTank->shoot();
+                auto shell = actualTank->shoot();
                 if (shell) {
                     // Add shell to bullets
-                    if (shell != nullptr) {
-                        bulletsPositions.push_back(*shell);
-                    }
-                    delete shell;
+                    bulletsPositions.push_back(*shell);
                     std::cout << "Shell created and added to board" << std::endl;
                 }
                 break;

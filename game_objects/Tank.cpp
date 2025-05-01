@@ -2,6 +2,7 @@
 #include "Direction.h"
 #include "../constants/BoardConstants.h"
 #include "../algorithms/Algorithm.h"
+#include <memory>
 
 Tank::Tank(int location[2], int dir[2])
   : Moveable(location, dir)
@@ -11,7 +12,9 @@ Tank::Tank(int location[2], int dir[2])
   , playerId(int(0))
 {}
 
-Tank::~Tank() {}
+Tank::~Tank() {
+    delete algo;
+}
 
 void Tank::turn(Turn t) {
     array<int, 2> newDir = getDirection(info.dir, t);
@@ -20,12 +23,12 @@ void Tank::turn(Turn t) {
     moveForward();
 }
 
-Shell* Tank::shoot() {
+std::unique_ptr<Shell> Tank::shoot() {
     if (ammoCount > 0 && shootingCooldown == 0) {
         --ammoCount;
         moveForward();
         shootingCooldown = BoardConstants::SHOOT_COOLDOWN;
-        auto shell = new Shell(info.location.data(), info.dir.data());
+        auto shell = std::make_unique<Shell>(info.location.data(), info.dir.data());
         shell->setJustFired(true);
         return shell;
     }

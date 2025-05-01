@@ -22,7 +22,7 @@ public:
     ~Tank() override;
 
     void turn(Turn t);
-    Shell* shoot();
+    std::unique_ptr<Shell> shoot();
 
     void assignAlgorithm(Algorithm *a);
     Algorithm* getAlgorithm() const;
