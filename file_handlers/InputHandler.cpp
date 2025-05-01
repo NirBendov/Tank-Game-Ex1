@@ -9,11 +9,21 @@
 using namespace std;
 using namespace BoardConstants;
 
+// Function to log errors to board_errors.txt
+void logError(const string& errorMessage) {
+    ofstream errorFile("board_errors.txt", ios::app);
+    if (errorFile.is_open()) {
+        errorFile << errorMessage << endl;
+        errorFile.close();
+    }
+}
+
 // Parse dimensions from the first line of the file
 std::array<int, 2> dims(const std::string& s) {
     cout << "Parsing dimensions from: " << s << endl;
     size_t space = s.find(" ");
     if (space == std::string::npos) {
+        logError("Error: Invalid dimensions format: " + s);
         throw std::runtime_error("Invalid dimensions format: " + s);
     }
     
@@ -21,6 +31,7 @@ std::array<int, 2> dims(const std::string& s) {
     int width = std::stoi(s.substr(space + 1));
     
     if (height <= 0 || width <= 0) {
+        logError("Error: Invalid board dimensions: " + s);
         throw std::runtime_error("Invalid board dimensions: " + s);
     }
     
@@ -32,16 +43,25 @@ std::vector<std::vector<char>> process(const std::string& fileName) {
     cout << "Opening file: " << fileName << endl;
     std::ifstream f(fileName);
     if (!f.is_open()) {
+        logError("Error: Could not open file: " + fileName);
         throw std::runtime_error("Could not open file: " + fileName);
     }
 
     std::string s;
     if (!std::getline(f, s)) {
+        logError("Error: File is empty: " + fileName);
         throw std::runtime_error("File is empty: " + fileName);
     }
 
     cout << "Parsing dimensions..." << endl;
-    std::array<int, 2> d = dims(s);
+    std::array<int, 2> d;
+    try {
+        d = dims(s);
+    } catch (const std::runtime_error& e) {
+        logError("Error: No valid dimensions provided in file");
+        throw std::runtime_error("No valid dimensions provided in file");
+    }
+    
     BoardConstants::BOARD_HEIGHT = d[0];
     BoardConstants::BOARD_WIDTH = d[1];
     std::cout << "Board dimensions: " << BoardConstants::BOARD_HEIGHT << "x" << BoardConstants::BOARD_WIDTH << std::endl;
@@ -49,7 +69,7 @@ std::vector<std::vector<char>> process(const std::string& fileName) {
     std::vector<std::vector<char>> board;
     int player1_count = 0;
     int player2_count = 0;
-    int line_number = 1; // Track line number for better error messages
+    int line_number = 1;
     
     cout << "Reading board contents..." << endl;
     while (std::getline(f, s)) {
@@ -58,59 +78,64 @@ std::vector<std::vector<char>> process(const std::string& fileName) {
         
         if (board.size() >= static_cast<size_t>(BOARD_HEIGHT)) {
             cout << "Reached maximum board height, stopping." << endl;
-            break; // Stop reading if we already have the required number of lines
-        }
-        
-        if (s.length() < static_cast<size_t>(BOARD_WIDTH)) {
-            throw std::runtime_error("Invalid line length at line " + std::to_string(line_number) + ": expected " + std::to_string(BOARD_WIDTH) + ", got " + std::to_string(s.length()));
+            logError("Warning: File has more rows than specified height. Extra rows will be ignored.");
+            break;
         }
         
         std::vector<char> row;
-        for (size_t i = 0; i < std::min(s.length(), static_cast<size_t>(BOARD_WIDTH)); i++) {
-            char c = s[i];
-            cout << "Processing character at position " << i << ": '" << c << "'" << endl;
-            
-            // Validate characters
-            if (c != WALL && c != DAMAGED_WALL && c != MINE && c != PLAYER1_TANK && c != PLAYER2_TANK && c != EMPTY_SPACE) {
-                throw std::runtime_error("Invalid character '" + std::string(1, c) + "' at line " + std::to_string(line_number) + ", position " + std::to_string(i));
+        for (size_t i = 0; i < static_cast<size_t>(BOARD_WIDTH); i++) {
+            char c;
+            if (i < s.length()) {
+                c = s[i];
+                // Validate characters
+                if (c != WALL && c != DAMAGED_WALL && c != MINE && c != PLAYER1_TANK && c != PLAYER2_TANK && c != EMPTY_SPACE) {
+                    logError("Warning: Invalid character '" + std::string(1, c) + "' at line " + std::to_string(line_number) + ", position " + std::to_string(i) + ". Replacing with empty space.");
+                    c = EMPTY_SPACE;
+                }
+            } else {
+                c = EMPTY_SPACE;
+                logError("Warning: Line " + std::to_string(line_number) + " is shorter than specified width. Adding empty spaces.");
             }
             
-            // Count tanks and enforce the limit
+            // Count tanks and handle multiple tanks per player
             if (c == PLAYER1_TANK) {
-                player1_count++;
-                cout << "Found player 1 tank (count: " << player1_count << ")" << endl;
-                if (player1_count > NUMBER_OF_TANKS_PER_PLAYER) {
-                    cout << "Too many player 1 tanks, converting to empty space" << endl;
-                    c = EMPTY_SPACE; // Replace extra tanks with empty space
+                if (player1_count == 0) {
+                    player1_count++;
+                } else {
+                    logError("Warning: Multiple player 1 tanks found. Converting extra tank at line " + std::to_string(line_number) + ", position " + std::to_string(i) + " to empty space.");
+                    c = EMPTY_SPACE;
                 }
             }
             if (c == PLAYER2_TANK) {
-                player2_count++;
-                cout << "Found player 2 tank (count: " << player2_count << ")" << endl;
-                if (player2_count > NUMBER_OF_TANKS_PER_PLAYER) {
-                    cout << "Too many player 2 tanks, converting to empty space" << endl;
-                    c = EMPTY_SPACE; // Replace extra tanks with empty space
+                if (player2_count == 0) {
+                    player2_count++;
+                } else {
+                    logError("Warning: Multiple player 2 tanks found. Converting extra tank at line " + std::to_string(line_number) + ", position " + std::to_string(i) + " to empty space.");
+                    c = EMPTY_SPACE;
                 }
             }
             
             row.push_back(c);
         }
         board.push_back(row);
-        cout << "Added row to board (current height: " << board.size() << ")" << endl;
     }
     
-    // Validate board dimensions
-    if (board.size() != static_cast<size_t>(BOARD_HEIGHT)) {
-        throw std::runtime_error("Invalid board height: expected " + std::to_string(BOARD_HEIGHT) + ", got " + std::to_string(board.size()));
+    // Add empty rows if needed
+    while (board.size() < static_cast<size_t>(BOARD_HEIGHT)) {
+        logError("Warning: File has fewer rows than specified height. Adding empty rows.");
+        std::vector<char> emptyRow(BOARD_WIDTH, EMPTY_SPACE);
+        board.push_back(emptyRow);
     }
     
     // Validate tank counts
-    if (player1_count != 1) {
-        std::cout << "Warning: Invalid number of player 1 tanks: " << player1_count << std::endl;
+    if (player1_count == 0) {
+        logError("Error: No player 1 tank found in the board");
+        throw std::runtime_error("No player 1 tank found in the board");
     }
     
-    if (player2_count != 1) {
-        std::cout << "Warning: Invalid number of player 2 tanks: " << player2_count << std::endl;
+    if (player2_count == 0) {
+        logError("Error: No player 2 tank found in the board");
+        throw std::runtime_error("No player 2 tank found in the board");
     }
 
     std::cout << "Finished constructing board" << std::endl;
