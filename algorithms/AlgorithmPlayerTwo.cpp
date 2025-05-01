@@ -118,11 +118,11 @@ Action AlgorithmPlayerTwo::regularRoutine() {
         array<int,2> dir = tank->getInfo().dir;
         // if (isPathClear(pathToEnemy, board)) {
             cout << "Path is clear" << endl;
-            if (pathDir[0] == dir[0] && pathDir[1] == dir[1] && tank->getShootingCooldown() == 0) {
+            if (pathDir[0] == dir[0] && pathDir[1] == dir[1] && tank->getShootingCooldown() == 0 && tank->getAmmoCount() > 0) {
                 cout << "Tank facing enemy, shooting" << endl;
                 return {Action::Type::SHOOT, *tank};
             }
-            else if (tank->getShootingCooldown() == 0) {
+            else if (tank->getShootingCooldown() == 0 || tank->getShootingCooldown() > 0) {
                 cout << "Turning to face enemy" << endl;
                 Turn t = rotation(dir, pathDir);
                 cout << "Turn taken:" << t << endl;
