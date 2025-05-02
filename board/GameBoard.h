@@ -59,7 +59,7 @@ public:
     vector<TankDeath> tankDeaths; // List of tank deaths with their positions, player IDs and causes
     
     GameBoard(const vector<vector<char>>& initialBoard, int maxSteps = 100);
-    ~GameBoard();
+    ~GameBoard() = default;
     
     bool validateMove(const Action& action, int playerId);
     void addToStepMoves(const Action& action, int playerId);

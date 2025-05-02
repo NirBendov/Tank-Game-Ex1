@@ -116,22 +116,20 @@ Action AlgorithmPlayerTwo::regularRoutine() {
         cout << "Path is straight" << endl;
         array<int,2> pathDir = calcDirection(pathToEnemy, rows, columns);
         array<int,2> dir = tank->getInfo().dir;
-        // if (isPathClear(pathToEnemy, board)) {
-            cout << "Path is clear" << endl;
-            if (pathDir[0] == dir[0] && pathDir[1] == dir[1] && tank->getShootingCooldown() == 0 && tank->getAmmoCount() > 0) {
-                cout << "Tank facing enemy, shooting" << endl;
-                return {Action::Type::SHOOT, *tank};
-            }
-            else if (tank->getShootingCooldown() == 0 || tank->getShootingCooldown() > 0) {
-                cout << "Turning to face enemy" << endl;
-                Turn t = rotation(dir, pathDir);
-                cout << "Turn taken:" << t << endl;
-                return {turnToAction(t), *tank};
-            }
-            else {
-                return {Action::Type::NOP, *tank};
-            }
-        // }
+        cout << "Path is clear" << endl;
+        if (pathDir[0] == dir[0] && pathDir[1] == dir[1] && tank->getShootingCooldown() == 0 && tank->getAmmoCount() > 0) {
+            cout << "Tank facing enemy, shooting" << endl;
+            return {Action::Type::SHOOT, *tank};
+        }
+        else if (!(pathDir[0] == dir[0] && pathDir[1] == dir[1])) {
+            cout << "Turning to face enemy" << endl;
+            Turn t = rotation(dir, pathDir);
+            cout << "Turn taken:" << t << endl;
+            return {turnToAction(t), *tank};
+        }
+        else {
+            return {Action::Type::NOP, *tank};
+        }
     }
     cout << "Following path" << endl;
     return {followPath(), *tank};
@@ -208,31 +206,24 @@ Action::Type AlgorithmPlayerTwo::followPath() {
     int columns = board[0].size();
     Moveable::Info info = tank->getInfo();
     Point &start = pathToEnemy[0];
-    cout << "current: " << start.x << ", " << start.y << endl;
     Point &next = pathToEnemy[1];
-    cout << "next: " << next.x << ", " << next.y << endl;
     array<int,2> dir = directionBetweenPoints(start, next);
     if (dir[0] == info.dir[0] && dir[1] == info.dir[1]) {
-        cout << "there" << endl;
         char tile = board[(info.location[0] + dir[0])%rows][(info.location[1] + dir[1])%columns];
-        cout << tile << endl;
-        cout << (info.location[0] + dir[0])%rows << ", " << (info.location[1] + dir[1])%columns << endl;
         if ((tile == BoardConstants::WALL || tile == BoardConstants::DAMAGED_WALL) && tank->getShootingCooldown() == 0) {
-            cout << "phere" << endl;
             return Action::Type::SHOOT;
         }
-        else {
-            cout << "ghere" << endl;
+        else if (!(tile == BoardConstants::WALL || tile == BoardConstants::DAMAGED_WALL)){
             pathToEnemy.erase(pathToEnemy.begin());
             return Action::Type::MOVE_FORWARD;
         }
+        else
+           return Action::Type::NOP; 
     } 
     else {
-        cout << "here" << endl;
         Turn t = rotation(info.dir, dir);
         cout << t << endl;
         return turnToAction(t);
     }
-    cout << "where" << endl;
     return Action::Type::NOP;
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include "Moveable.h"
 #include "Shell.h"
 #include "Direction.h"      
