@@ -6,7 +6,8 @@ A 2D tank strategy game implemented in C++.
 
 The user must provide a path to the file that contains the game board, which must follow a specific format:
 1. The first row in the file will be used to specify the board's intended dimensions, using the following format:
-- <height> <space> <width>
+- height space width
+- height and width must both be positive integers with a space character seperating them.
 2. The board's construction will begin from the file's second row down. The following characters should be used:
 - ' ' (Empty space) to represent an empty tile.
 - '#' to represent a wall.
