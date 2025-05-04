@@ -1,0 +1,39 @@
+Game Moves (by step):
+
+Step 1:
+Player 1: TURN_RIGHT_90 on tank at (2,2)
+Player 2: MOVE_FORWARD on tank at (5,3)
+
+Step 2:
+Player 1: TURN_RIGHT_45 on tank at (2,2)
+Player 2: TURN_RIGHT_90 on tank at (5,2)
+
+Step 3:
+Player 1: MOVE_FORWARD on tank at (2,2)
+Player 2: SHOOT on tank at (5,2)
+
+Step 4:
+Player 1: TURN_LEFT_90 on tank at (3,1)
+Player 2: TURN_RIGHT_90 on tank at (5,2)
+
+Step 5:
+Player 1: MOVE_FORWARD on tank at (3,1)
+Player 2: TURN_RIGHT_90 on tank at (5,2)
+
+Step 6:
+Player 1: TURN_RIGHT_45 on tank at (4,2)
+Player 2: NO_OPERATION on tank at (5,2)
+
+Step 7:
+Player 1: SHOOT on tank at (4,2)
+Player 2: NO_OPERATION on tank at (5,2)
+
+Step 8:
+Player 1: TURN_RIGHT_45 on tank at (4,2)
+Player 2: MOVE_FORWARD on tank at (5,2)
+
+Game Result:
+Player 1 won!
+
+Tank Deaths (in order of occurrence):
+Player 2's tank at position (5,2) died from: Shell hit

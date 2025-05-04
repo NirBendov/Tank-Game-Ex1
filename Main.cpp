@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
 
     // 1. Read the input filename from argv
     string inputFile = argv[1];
-    int maxSteps = stoi(argv[2]);
+    int maxSteps = (argc > 2) ? stoi(argv[2]) : 1000;
 
     // 2. Parse out just the base name (no directory, no extension)
     fs::path inPath{inputFile};
@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
     cout << "Initializing algorithms..." << endl;
     // Example: both players using AlgorithmPlayerTwo
     AlgorithmPlayerTwo algo1(1, &gameBoard);
-    AlgorithmPlayerTwo algo2(2, &gameBoard);
+    AlgorithmBasic algo2(2, &gameBoard);
     cout << "Algorithms initialized" << endl;
 
     int step = 0;

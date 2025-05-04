@@ -825,6 +825,8 @@ void GameBoard::executeStep() {
         winner = 0; // Tie game
         return;
     }
+
+    std::cout << "Handling shells..." << std::endl;
     
     for (int i = 0; i < 2; ++i) {
         if (!bulletsPositions.empty()) {
@@ -914,7 +916,26 @@ void GameBoard::saveGameMoves(const string& filename) const {
     // Save game result
     outputFile << "\nGame Result:" << endl;
     if (winner == 0) {
-        outputFile << "Tie - Both players lost all their tanks" << endl;
+        bool anyTanksAlive = false;
+        // Check if any tanks are still alive
+        for (const auto& tank : player1Tanks) {
+            if (tank.getIsTankAlive()) {
+                anyTanksAlive = true;
+                break;
+            }
+        }
+        for (const auto& tank : player2Tanks) {
+            if (tank.getIsTankAlive()) {
+                anyTanksAlive = true;
+                break;
+            }
+        }
+        
+        if (anyTanksAlive && numOfTurnsSinceNoAmmo >= NO_AMMO_TURNS) {
+            outputFile << "Tie - All ammo exhausted" << endl;
+        } else {
+            outputFile << "Tie - All tanks lost" << endl;
+        }
     } else {
         outputFile << "Player " << winner << " won!" << endl;
     }

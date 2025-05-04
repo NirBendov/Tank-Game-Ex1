@@ -143,7 +143,8 @@ Action::Type AlgorithmBasic::findSafeMove(const Tank& tank) const {
             array<int, 2> nextPos = tank.potentialMove();
             if (board[nextPos[0]][nextPos[1]] != WALL && 
                 board[nextPos[0]][nextPos[1]] != DAMAGED_WALL && 
-                board[nextPos[0]][nextPos[1]] != MINE) {
+                board[nextPos[0]][nextPos[1]] != MINE &&
+                !isInBulletPath(shellInfo.location, shellInfo.dir, nextPos, gameBoard)) {
                 return Action::Type::MOVE_FORWARD;
             }
 
@@ -175,7 +176,8 @@ Action::Type AlgorithmBasic::findSafeMove(const Tank& tank) const {
                 nextPos = tempTank.potentialMove();
                 if (board[nextPos[0]][nextPos[1]] != WALL && 
                     board[nextPos[0]][nextPos[1]] != DAMAGED_WALL && 
-                    board[nextPos[0]][nextPos[1]] != MINE) {
+                    board[nextPos[0]][nextPos[1]] != MINE &&
+                    !isInBulletPath(shellInfo.location, shellInfo.dir, nextPos, gameBoard)) {
                     return turnAction;
                 }
             }
@@ -233,10 +235,11 @@ vector<Action> AlgorithmBasic::decideNextActions() {
     vector<Action> actions;
     
     // Get tank positions
-    const auto& myTanks = gameBoard->getPlayerTanks(playerId);
+    auto& myTanks = gameBoard->getPlayerTanksNonConst(playerId);
     
     // Process each tank
-    for (const auto& tank : myTanks) {
+    for (auto& tank : myTanks) {
+        tank.assignAlgorithm(this);
         if (!tank.getIsTankAlive()) continue;
         
         // First priority: Check if tank is in danger
