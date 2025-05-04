@@ -27,7 +27,6 @@ AlgorithmBasic::~AlgorithmBasic() {
 bool AlgorithmBasic::isInDanger(const Tank& tank) const {
     const auto& tankInfo = tank.getInfo();
     const auto& shells = gameBoard->getBullets();
-    const auto& board = gameBoard->getBoard();
     
     // Check if any shell is heading towards the tank
     for (const auto& shell : shells) {
@@ -58,7 +57,7 @@ bool AlgorithmBasic::canShootEnemy(const Tank& tank) const {
     return false;
 }
 
-bool AlgorithmBasic::canShootFromPosition(const Tank& tank, int x, int y) const {
+bool AlgorithmBasic::canShootFromPosition(int x, int y) const {
     const auto& enemyTanks = gameBoard->getEnemyTankPositions(playerId);
     
     // For each direction, check if we can shoot an enemy
@@ -67,8 +66,8 @@ bool AlgorithmBasic::canShootFromPosition(const Tank& tank, int x, int y) const 
         for (const auto& enemyPos : enemyTanks) {
             array<int, 2> startPos = {x, y};
             array<int, 2> endPos = {enemyPos.first, enemyPos.second};
-            array<int, 2> dir = {dir[0], dir[1]};
-            if (isInBulletPath(startPos, dir, endPos, gameBoard)) {
+            array<int, 2> dirr = {dir[0], dir[1]};
+            if (isInBulletPath(startPos, dirr, endPos, gameBoard)) {
                 return true;
             }
         }

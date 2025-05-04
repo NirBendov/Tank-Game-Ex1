@@ -27,6 +27,11 @@ Then, in order to run the program:
 ```bash
 ./tanks_game <input_file>
 ```
+In this case, the maximal number of turns that a game can last is 1000.
+If you wish to change the maximal number of steps in a specific game, run this instead:
+```bash
+./tanks_game <input_file> <max_step>
+```
 
 ## Program Output
 

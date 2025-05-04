@@ -33,7 +33,7 @@ set(GAME_SOURCES
     constants/boardconstants.cpp
     algorithms/PathFinder.cpp
     algorithms/AlgorithmPlayerTwo.cpp
-    algorithms/AlgorithemBasic.cpp
+    algorithms/AlgorithmBasic.cpp
     file_handlers/InputHandler.cpp
 )
 

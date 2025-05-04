@@ -26,7 +26,7 @@ private:
     Tank* myTank = nullptr;
     bool isInDanger(const Tank& tank) const;
     bool canShootEnemy(const Tank& tank) const;
-    bool canShootFromPosition(const Tank& tank, int x, int y) const;
+    bool canShootFromPosition(int x, int y) const;
     bool willShellHitPosition(int x, int y, int turnsAhead) const;
     bool isPositionSafeFromShells(int x, int y) const;
     vector<MoveOption> getPossibleMoves(const Tank& tank) const;

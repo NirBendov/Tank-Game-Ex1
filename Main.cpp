@@ -15,11 +15,6 @@ using namespace std;
 namespace fs = std::filesystem;
 
 int main(int argc, char* argv[]) {
-    if (argc != 3) {
-        cerr << "Usage: " << argv[0] << " <input_file> <max_steps>\n";
-        return 1;
-    }
-
     // 1. Read the input filename from argv
     string inputFile = argv[1];
     int maxSteps = (argc > 2) ? stoi(argv[2]) : 1000;
