@@ -29,7 +29,6 @@ set(GAME_SOURCES
     game_objects/Moveable.cpp
     game_objects/Direction.cpp
     board/GameBoard.cpp
-    player/Player.cpp
     constants/boardconstants.cpp
     algorithms/PathFinder.cpp
     algorithms/AlgorithmPlayerTwo.cpp
